@@ -54,12 +54,12 @@ public class Editor extends TextEditor
     private volatile String sourceName;
     private volatile Color[] textColours;
 
-    private ScriptParser jetParser;
+    private ScriptParser jjspParser;
 
     public Editor(int fontSize)
     {
         super(fontSize);
-        getJetParser();
+        getJJSPParser();
     } 
 
     public void setSourceName(String srcName)
@@ -72,20 +72,20 @@ public class Editor extends TextEditor
         return sourceName;
     }
 
-    public ScriptParser getJetParser()
+    public ScriptParser getJJSPParser()
     {
-        if (jetParser == null)
-            jetParser = new ScriptParser("");
-        return jetParser;
+        if (jjspParser == null)
+            jjspParser = new ScriptParser("");
+        return jjspParser;
     }
 
     protected void layoutRefreshed(CharSequence content) 
     {
-        if (jetParser == null)
+        if (jjspParser == null)
             return;
-        jetParser.setSource(content);
+        jjspParser.setSource(content);
 
-        int[] annotations = jetParser.getAnnotations();
+        int[] annotations = jjspParser.getAnnotations();
         Color[] cc = new Color[annotations.length];
         
         for (int i=0; i<annotations.length; i++)

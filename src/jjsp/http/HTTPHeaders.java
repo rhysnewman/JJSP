@@ -269,7 +269,7 @@ public class HTTPHeaders
             return "image/vnd.microsoft.icon";
         if (fileName.endsWith(".jnlp"))
             return "application/x-java-jnlp-file";
-        if (fileName.endsWith(".txt") || fileName.endsWith(".java") || fileName.endsWith(".c") || fileName.endsWith(".cpp") || fileName.endsWith(".jet") || fileName.endsWith(".log") || fileName.equals("makefile") || fileName.endsWith("md") || fileName.endsWith(".jf"))
+        if (fileName.endsWith(".txt") || fileName.endsWith(".java") || fileName.endsWith(".c") || fileName.endsWith(".cpp") || fileName.endsWith(".jet") || fileName.endsWith(".jjsp") || fileName.endsWith(".log") || fileName.equals("makefile") || fileName.endsWith("md") || fileName.endsWith(".jf"))
             return "text/plain; charset=utf-8";
         if (fileName.endsWith(".xml"))
             return "text/xml; charset=utf-8";

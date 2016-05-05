@@ -22,6 +22,7 @@ import java.io.*;
 import java.util.*;
 
 import jjsp.util.*;
+import jjsp.engine.*;
 
 import java.awt.Graphics2D;
 import java.awt.image.*;
@@ -45,18 +46,25 @@ public class ImageIconCache
 
     private static final JFileChooser chooser = new JFileChooser();
 
-    private static Image jetImage, jetImageSmall, jfImage, jfImageSmall;
+    private static Image jjspImage, jjspImageSmall, jfImage, jfImageSmall;
     static
     {
         try
         {
-            byte[] rawData1 = Utils.load("resources/jet.png");
-            jetImage = new Image(new ByteArrayInputStream(rawData1));
-            jetImageSmall = new Image(new ByteArrayInputStream(rawData1), 20, 20, true, true);
+            byte[] rawData1 = Utils.load("resources/JJSP.png");
+            BufferedImage im = ImageIO.read(new ByteArrayInputStream(rawData1));
+            im = new ImageGenerator().makeEdgesTransparent(im);
+            ByteArrayOutputStream bb = new ByteArrayOutputStream();
+            ImageIO.write(im, "png", bb);
+            rawData1 = bb.toByteArray();
+
+            jjspImage = new Image(new ByteArrayInputStream(rawData1));
+            jjspImageSmall = new Image(new ByteArrayInputStream(rawData1), 20, 20, true, true);
         }
         catch (Exception e) 
         {
-            System.out.println("Warning - failed to load default JET image");
+            e.printStackTrace();
+            System.out.println("Warning - failed to load default JJSP image");
         }
 
         try
@@ -67,9 +75,8 @@ public class ImageIconCache
         }
         catch (Exception e) 
         {
-            jfImage = jetImage;
-            jfImageSmall = jetImageSmall;
-            System.out.println("Warning - failed to load default Jet Fuel image");
+            jfImage = jjspImage;
+            jfImageSmall = jjspImageSmall;
         }
     }
 
@@ -82,15 +89,18 @@ public class ImageIconCache
     {
         this.cacheDir = cacheDir;
         imageIndex = new HashMap();
-        if (jetImageSmall != null)
-            imageIndex.put("jet", jetImageSmall);
+        if (jjspImageSmall != null)
+        {
+            imageIndex.put("jjsp", jjspImageSmall);
+            imageIndex.put("jet", jjspImageSmall);
+        }
         if (jfImageSmall != null)
             imageIndex.put("jf", jfImageSmall);
     }
 
-    public static Image getJetImage()
+    public static Image getJJSPImage()
     {
-        return jetImage;
+        return jjspImage;
     }
 
     public Image getImageFor(File f)
@@ -331,7 +341,7 @@ public class ImageIconCache
         if (!resDir.exists())
             resDir = new File("resources");
         
-        File[] icons = new File("jetcache/.jde/icons").listFiles();
+        File[] icons = new File("jjspcache/.jde/icons").listFiles();
         for (int i=0; i<icons.length; i++)
         {
             String name = icons[i].getName();

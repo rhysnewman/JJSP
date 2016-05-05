@@ -25,7 +25,7 @@ public class Log
 {
     public static void set() throws IOException 
     {
-        set("jet_log");
+        set("jjsp_log");
     }
 
     public static void set(String directory) throws IOException 

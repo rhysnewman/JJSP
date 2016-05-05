@@ -374,7 +374,7 @@ public class SQLPane extends JDETextEditor
             outputTabs.getTabs().setAll(outputTabs.getTabs().get(0));
  
             report.println("Execution Task started: "+new java.util.Date()+"\n");
-            report.println("Jet Version "+getVersion()+"\n");
+            report.println("JJSP Version "+getVersion()+"\n");
             wrapper = driver.getConnection(5000);
             Statement stmt = wrapper.getStatement();
 
@@ -514,8 +514,8 @@ public class SQLPane extends JDETextEditor
             
         dialogStage.setTitle("Connect to Database");
         dialogStage.setScene(new Scene(bp));
-        if (ImageIconCache.getJetImage() != null)
-            dialogStage.getIcons().add(ImageIconCache.getJetImage());
+        if (ImageIconCache.getJJSPImage() != null)
+            dialogStage.getIcons().add(ImageIconCache.getJJSPImage());
         dialogStage.sizeToScene();
         dialogStage.setResizable(false);
         dialogStage.showAndWait();

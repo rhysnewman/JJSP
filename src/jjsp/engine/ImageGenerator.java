@@ -23,6 +23,7 @@ import java.awt.*;
 import java.awt.image.*;
 
 import javax.imageio.*;
+import javafx.embed.swing.*;
 
 import jjsp.util.*;
 
@@ -37,6 +38,16 @@ public class ImageGenerator
     public javafx.scene.paint.Color fromAWTColor(java.awt.Color awtColor)
     {
         return new javafx.scene.paint.Color(awtColor.getRed() / 255.0, awtColor.getGreen() / 255.0, awtColor.getBlue() / 255.0, awtColor.getAlpha() / 255.0);
+    }
+
+    public BufferedImage toBufferedImage(javafx.scene.image.Image src)
+    {
+        return SwingFXUtils.fromFXImage(src, null);
+    }
+
+    public javafx.scene.image.Image toFXImage(BufferedImage src)
+    {
+        return SwingFXUtils.toFXImage(src, null);
     }
 
     public byte[] getImageBytes(BufferedImage im) throws Exception

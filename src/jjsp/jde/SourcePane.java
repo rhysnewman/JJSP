@@ -52,7 +52,7 @@ public class SourcePane extends JDETextEditor
 {
     private SplitPane mainSplit;
     private BorderPane leftPane;
-    private ColouredSearchableTextOutput jetEngineOutput;
+    private ColouredSearchableTextOutput jjspEngineOutput;
     
     private int errorLine;
     private String argList;
@@ -61,7 +61,7 @@ public class SourcePane extends JDETextEditor
     private Throwable currentError;
     
     private HTTPLogView log;
-    private JDEEngine jetEngine;
+    private JDEEngine jjspEngine;
     private LocalStoreView localStoreView;
 
     private FileChooser fileChooser;
@@ -96,18 +96,18 @@ public class SourcePane extends JDETextEditor
     protected void showSearchBox()
     {
         super.showSearchBox();
-        jetEngineOutput.showSearchBox();
+        jjspEngineOutput.showSearchBox();
     }
 
     protected void hideSearchBox()
     {
         super.hideSearchBox();
-        jetEngineOutput.hideSearchBox();
+        jjspEngineOutput.hideSearchBox();
     }
     
     protected void init(SharedTextEditorState sharedState)
     {
-        if (getURI().toString().endsWith(".jet"))
+        if (getURI().toString().endsWith(".jjsp") || getURI().toString().endsWith(".jet"))
             editor = new JDEditor();
         else
             editor = new JSEditor();
@@ -118,13 +118,13 @@ public class SourcePane extends JDETextEditor
         localStoreView = new LocalStoreView();
 
         errorLine = -1;
-        jetEngine = null;
+        jjspEngine = null;
         currentError = null;
         statusMessage = "";
         siteOutput = "";
         argList = getDefaultArgs();
 
-        jetEngineOutput = new ColouredSearchableTextOutput();
+        jjspEngineOutput = new ColouredSearchableTextOutput();
 
         leftPane = new BorderPane();
         leftPane.setCenter(editor);
@@ -133,13 +133,13 @@ public class SourcePane extends JDETextEditor
         searchBox = new BorderPane();
         leftPane.setTop(searchBox);
 
-        Tab tab1 = new Tab("Jet Output");
-        tab1.setContent(jetEngineOutput);
+        Tab tab1 = new Tab("JJSP Output");
+        tab1.setContent(jjspEngineOutput);
         tab1.setClosable(false);
         Tab tab2 = new Tab("HTTP Log");
         tab2.setContent(log);
         tab2.setClosable(false);
-        Tab tab3 = new Tab("Local Jet Store");
+        Tab tab3 = new Tab("Local JJSP Store");
         tab3.setContent(localStoreView);
         tab3.setClosable(false);
 
@@ -169,9 +169,9 @@ public class SourcePane extends JDETextEditor
     {
         FileChooser fileChooser = new FileChooser();
         if (editor instanceof JDEditor)
-            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Jet Source Code", "*.jet"));
+            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("JJSP Script", "*.jjsp"), new FileChooser.ExtensionFilter("JJSP Source Code", "*.jet"));
         else
-            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Jet Fuel Code", "*.jf"));
+            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("JJSP Code", "*.jf"));
         return fileChooser;
     }
 
@@ -186,7 +186,7 @@ public class SourcePane extends JDETextEditor
         MenuItem saveArchive = new MenuItem("Save Local Content in ZIP Archive");
         saveArchive.setOnAction((evt)-> 
                             { 
-                                if ((jetEngine == null) || (jetEngine.getRuntime() == null))
+                                if ((jjspEngine == null) || (jjspEngine.getRuntime() == null))
                                 {
                                     clearStatus();
                                     appendStatus("No Output available - compile first", null);
@@ -204,7 +204,7 @@ public class SourcePane extends JDETextEditor
                                 {
                                     try
                                     {
-                                        byte[] archiveBytes = jetEngine.getRuntime().toZIPArchive();
+                                        byte[] archiveBytes = jjspEngine.getRuntime().toZIPArchive();
                                         FileOutputStream fout = new FileOutputStream(file);
                                         fout.write(archiveBytes);
                                         fout.close();
@@ -224,10 +224,10 @@ public class SourcePane extends JDETextEditor
         extraArgs.setOnAction((evt)-> showArgsPopup());
 
         Menu[] mm = super.createMenus();
-        mm[0].setText("Jet Actions");
+        mm[0].setText("JJSP Actions");
         mm[0].getItems().addAll(new SeparatorMenuItem(), compile, stop, new SeparatorMenuItem(), extraArgs, new SeparatorMenuItem(), saveArchive, clearHTTPLog);   
 
-        CheckMenuItem showTranslation = new CheckMenuItem("Show Jet Translation");
+        CheckMenuItem showTranslation = new CheckMenuItem("Show JJSP Script Translation");
         showTranslation.setSelected(mainSplit.getItems().get(0) != leftPane);
         showTranslation.setOnAction((evt)-> 
                                { 
@@ -238,7 +238,7 @@ public class SourcePane extends JDETextEditor
                                    {
                                        SplitPane hSplit = new SplitPane();
                                        hSplit.setOrientation(Orientation.HORIZONTAL);
-                                       hSplit.getItems().addAll(leftPane, ((JDEditor) editor).translatedJet);
+                                       hSplit.getItems().addAll(leftPane, ((JDEditor) editor).translatedJJSP);
                                        hSplit.setDividerPosition(0, 0.66);
                                        mainSplit.getItems().set(0, hSplit);
                                    } 
@@ -310,7 +310,7 @@ public class SourcePane extends JDETextEditor
     {
         currentError = null;
         statusMessage = "";
-        jetEngineOutput.output.setText("");
+        jjspEngineOutput.output.setText("");
     }
     
     public void appendStatus(String message, Throwable t)
@@ -358,21 +358,21 @@ public class SourcePane extends JDETextEditor
 
         if (mainCause != null)
         {
-            jetEngineOutput.output.setText("");
-            jetEngineOutput.output.appendColouredText(statusMessage, Color.MAGENTA);
-            jetEngineOutput.output.appendColouredText("\n\n"+toString(mainCause), Color.RED);
+            jjspEngineOutput.output.setText("");
+            jjspEngineOutput.output.appendColouredText(statusMessage, Color.MAGENTA);
+            jjspEngineOutput.output.appendColouredText("\n\n"+toString(mainCause), Color.RED);
         }
         else
-            jetEngineOutput.output.setText(statusMessage);
+            jjspEngineOutput.output.setText(statusMessage);
 
-        jetEngineOutput.output.setScrollBarPosition(100.0);
-        jetEngineOutput.output.refreshView();
+        jjspEngineOutput.output.setScrollBarPosition(100.0);
+        jjspEngineOutput.output.refreshView();
     }
 
     public String getStatusText()
     {
-        jetEngineOutput.output.refreshView();
-        return jetEngineOutput.output.getText();
+        jjspEngineOutput.output.refreshView();
+        return jjspEngineOutput.output.getText();
     }
 
     public void appendStatusText(String text)
@@ -382,15 +382,15 @@ public class SourcePane extends JDETextEditor
         
         statusMessage += text;
         
-        jetEngineOutput.output.setText("");
-        jetEngineOutput.output.appendColouredText(statusMessage, Color.web("#660033"));
-        jetEngineOutput.output.setScrollBarPosition(100.0);
-        jetEngineOutput.output.refreshView();
+        jjspEngineOutput.output.setText("");
+        jjspEngineOutput.output.appendColouredText(statusMessage, Color.web("#660033"));
+        jjspEngineOutput.output.setScrollBarPosition(100.0);
+        jjspEngineOutput.output.refreshView();
     }
 
     public void requestFocus()
     {
-        jetEngineOutput.output.refreshView();
+        jjspEngineOutput.output.refreshView();
         editor.refreshView();
         editor.requestFocus();
         super.requestFocus();
@@ -407,9 +407,9 @@ public class SourcePane extends JDETextEditor
     public double setSourceAndPosition(String jsSrc, int line, double scrollBarPos)
     {
         String editMessage = "<< Source edited since last compilation >>\n";
-        String outText = jetEngineOutput.output.getText();
+        String outText = jjspEngineOutput.output.getText();
         if (!outText.startsWith(editMessage))
-            jetEngineOutput.output.insertColouredText(0, editMessage, Color.BLUE);
+            jjspEngineOutput.output.insertColouredText(0, editMessage, Color.BLUE);
 
         if (editor instanceof JDEditor)
             return ((JDEditor) editor).setSourceAndPosition(jsSrc, line, scrollBarPos);
@@ -422,13 +422,13 @@ public class SourcePane extends JDETextEditor
         generatedOutputs = null;
         localStoreView.setEnvironment(null);
 
-        if (jetEngine != null)
-            jetEngine.stop();
+        if (jjspEngine != null)
+            jjspEngine.stop();
 
         setDisplayed(true);
 
-        jetEngine = null;
-        appendStatus(new Date()+" Jet Engine stopped", null);
+        jjspEngine = null;
+        appendStatus(new Date()+" JJSP Engine stopped", null);
         
         for (int i=0; i<5; i++)
         {
@@ -452,22 +452,22 @@ public class SourcePane extends JDETextEditor
         Throwable error;
         ArrayList resultURIs;
 
-        public JDEEngine(String jsSrc, URI srcURI, Environment jetEnv, Map args)
+        public JDEEngine(String jsSrc, URI srcURI, Environment jjspEnv, Map args)
         {
-            super(jsSrc, srcURI, jetEnv.getRootURI(), jetEnv.getLocalCacheDir(), args);
+            super(jsSrc, srcURI, jjspEnv.getRootURI(), jjspEnv.getLocalCacheDir(), args);
             resultURIs = new ArrayList();
             error = null;
         }
         
-        protected void compileJet(JJSPRuntime runtime, String jsSrc) throws Exception
+        protected void compile(JJSPRuntime runtime, String jsSrc) throws Exception
         {
             System.gc();
             System.gc();
             
             Date startTime = new Date();
-            println("Compilation Started "+startTime+"\nJet Version"+getVersion());
+            println("Compilation Started "+startTime+"\nJJSP Version"+getVersion());
             println();
-            super.compileJet(runtime, jsSrc);
+            super.compile(runtime, jsSrc);
 
             Date finishTime = new Date();
             long timeTaken = finishTime.getTime() - startTime.getTime();
@@ -584,7 +584,7 @@ public class SourcePane extends JDETextEditor
         
         protected synchronized void runtimeError(Throwable t) 
         {
-            println("\n\nJet Error: "+t.getMessage());
+            println("\n\nJJSP Error: "+t.getMessage());
             error = t;
         }
         
@@ -593,7 +593,7 @@ public class SourcePane extends JDETextEditor
             URI[] uris = new URI[resultURIs.size()];
             resultURIs.toArray(uris);
             generatedOutputs = uris;
-            println(new Date()+" Jet Server Started");
+            println(new Date()+" JJSP Server Started");
             
             Platform.runLater(() -> localStoreView.setEnvironment(runtime));
         }
@@ -626,13 +626,13 @@ public class SourcePane extends JDETextEditor
             
             synchronized (this)
             {
-                jetEngine = new JDEEngine(jsSrc, getURI(), JDE.getEnvironment(), args);
-                jetEngine.start();
+                jjspEngine = new JDEEngine(jsSrc, getURI(), JDE.getEnvironment(), args);
+                jjspEngine.start();
             }
         }
         catch (Exception e) 
         {
-            appendStatus("Failed to create Jet Engine", e);
+            appendStatus("Failed to create JJSP Engine", e);
         }
     }
 
@@ -640,11 +640,11 @@ public class SourcePane extends JDETextEditor
     {
         super.setDisplayed(isShowing);
 
-        JDEEngine je = jetEngine;
+        JDEEngine je = jjspEngine;
         if ((je != null) && je.stopRequested() && !je.stopped())
             je.stop();
 
-        jetEngineOutput.output.setDisplayed(isShowing);
+        jjspEngineOutput.output.setDisplayed(isShowing);
         editor.setDisplayed(isShowing);
 
         if (isShowing && (je != null))
@@ -657,24 +657,24 @@ public class SourcePane extends JDETextEditor
 
     class JDEditor extends Editor
     {
-        TextEditor translatedJet;
+        TextEditor translatedJJSP;
         
         JDEditor()
         {
             super(EDITOR_TEXT_SIZE);
             setMinSize(400, 200);
 
-            translatedJet = new TextEditor(EDITOR_TEXT_SIZE);
-            translatedJet.setEditable(false);
-            translateJet();
+            translatedJJSP = new TextEditor(EDITOR_TEXT_SIZE);
+            translatedJJSP.setEditable(false);
+            translateJJSP();
         }
 
-        void translateJet()
+        void translateJJSP()
         {
-            String compiledJet = getJetParser().translateToJavascript();
-            translatedJet.highlightLine(getCurrentLine());
+            String compiledJJSP = getJJSPParser().translateToJavascript();
+            translatedJJSP.highlightLine(getCurrentLine());
             double scrollBarPos = getScrollBarPosition();
-            setSourceAndPosition(compiledJet, getCurrentLine(), scrollBarPos);
+            setSourceAndPosition(compiledJJSP, getCurrentLine(), scrollBarPos);
         }
         
         public void requestFocus()
@@ -686,74 +686,74 @@ public class SourcePane extends JDETextEditor
         public void refreshView()
         {
             super.refreshView();
-            if (translatedJet != null)
-                translatedJet.refreshView();
+            if (translatedJJSP != null)
+                translatedJJSP.refreshView();
         }
 
         public void setDisplayed(boolean isShowing) 
         {
             super.setDisplayed(isShowing);
-            if (translatedJet != null)
-                translatedJet.setIsShowing(isShowing);
+            if (translatedJJSP != null)
+                translatedJJSP.setIsShowing(isShowing);
         }
 
         protected void contentChanged() 
         {
-            if (translatedJet != null)
-                translateJet();
+            if (translatedJJSP != null)
+                translateJJSP();
         }
         
         protected void caretPositioned(int line, int charPos) 
         {
-            if (translatedJet != null)
-                translatedJet.highlightLine(line);
+            if (translatedJJSP != null)
+                translatedJJSP.highlightLine(line);
         }
 
         protected void textScrolled(double scrollPosition) 
         {
-            if (translatedJet != null)
-                translatedJet.setScrollBarPosition(scrollPosition);
+            if (translatedJJSP != null)
+                translatedJJSP.setScrollBarPosition(scrollPosition);
         }
 
         double setErrorLine(int errorLine)
         {
             if (errorLine >= 0)
             {
-                translatedJet.highlightLine(errorLine);
-                int lineStatus = translatedJet.lineInViewport(errorLine);
+                translatedJJSP.highlightLine(errorLine);
+                int lineStatus = translatedJJSP.lineInViewport(errorLine);
                 if (lineStatus != 0)
-                    translatedJet.scrollToLine(errorLine);
+                    translatedJJSP.scrollToLine(errorLine);
             }
             else
-                translatedJet.clearSelection();
+                translatedJJSP.clearSelection();
 
-            return translatedJet.getScrollBarPosition();
+            return translatedJJSP.getScrollBarPosition();
         }
 
         double setSourceAndPosition(String jsSrc, int line, double scrollBarPos)
         {
-            translatedJet.setText(jsSrc);
-            translatedJet.setScrollBarPosition(scrollBarPos);
-            translatedJet.highlightLine(line);
+            translatedJJSP.setText(jsSrc);
+            translatedJJSP.setScrollBarPosition(scrollBarPos);
+            translatedJJSP.highlightLine(line);
             
-            int lineStatus = translatedJet.lineInViewport(line);
+            int lineStatus = translatedJJSP.lineInViewport(line);
             if (lineStatus != 0)
-                translatedJet.scrollToLine(line);
+                translatedJJSP.scrollToLine(line);
 
-            return translatedJet.getScrollBarPosition();
+            return translatedJJSP.getScrollBarPosition();
         }
 
         public String getTranslatedText()
         {
-            translateJet();
-            return translatedJet.getText();
+            translateJJSP();
+            return translatedJJSP.getText();
         }
     }
 
     private String getDefaultArgs()
     {
-        Environment jetEnv = JDE.getEnvironment();
-        Map args = jetEnv.getArgs();
+        Environment jjspEnv = JDE.getEnvironment();
+        Map args = jjspEnv.getArgs();
         args.put("jde", "true");
         
         return Args.toArgString(args);
@@ -776,7 +776,7 @@ public class SourcePane extends JDETextEditor
         gp.setHgap(10);
         gp.setVgap(10);
             
-        gp.add(new Label("Define Jet Args"), 0, 0);
+        gp.add(new Label("Define JJSP Args"), 0, 0);
         gp.add(argField, 1, 0);
 
         ok.setOnAction((evt) -> 
@@ -798,10 +798,10 @@ public class SourcePane extends JDETextEditor
         bp.setCenter(gp);
         bp.setBottom(hBox);
             
-        dialogStage.setTitle("Jet Runtime Arguments");
+        dialogStage.setTitle("JJSP Runtime Arguments");
         dialogStage.setScene(new Scene(bp));
-        if (ImageIconCache.getJetImage() != null)
-            dialogStage.getIcons().add(ImageIconCache.getJetImage());
+        if (ImageIconCache.getJJSPImage() != null)
+            dialogStage.getIcons().add(ImageIconCache.getJJSPImage());
         dialogStage.sizeToScene();
         dialogStage.setResizable(false);
         dialogStage.showAndWait();

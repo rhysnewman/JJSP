@@ -39,8 +39,8 @@ import jjsp.data.*;
 
 public class JJSPRuntime extends Environment
 {
-    public static final String JET_NAME = "jet";
-    public static final String TOP_LEVEL_SOURCE_PATH = "<<JET MAIN>>";
+    public static final String JJSP_NAME = "jjsp";
+    public static final String TOP_LEVEL_SOURCE_PATH = "<<JJSP MAIN>>";
 
     public static final int DEFAULT_PORT_BASE = 2016;
 
@@ -110,7 +110,7 @@ public class JJSPRuntime extends Environment
     protected void checkModifyResourcePaths()
     {
         if (initialised())
-            throw new IllegalStateException("Cannot modify Jet Runtime resource paths after initialisation");
+            throw new IllegalStateException("Cannot modify JJSP Runtime resource paths after initialisation");
     }
 
     public void init(URI srcURI) throws Exception
@@ -123,7 +123,7 @@ public class JJSPRuntime extends Environment
     public void init(String jsSource) throws Exception
     {
         if (initialised())
-            throw new IllegalStateException("Jet Runtime already initialised");
+            throw new IllegalStateException("JJSP Runtime already initialised");
 
         ClassLoader currentLoader = Thread.currentThread().getContextClassLoader();
         try
@@ -143,23 +143,23 @@ public class JJSPRuntime extends Environment
             }
 
             ScriptContext jsContext = scriptEngine.getContext();
-            jsContext.setAttribute(JET_NAME, this, ScriptContext.ENGINE_SCOPE);
+            jsContext.setAttribute(JJSP_NAME, this, ScriptContext.ENGINE_SCOPE);
 
             jsContext.setWriter(outputWriter);
             jsContext.setErrorWriter(outputWriter);
             jsContext.setReader(null);
 
-            scriptEngine.eval(wrapFunctionScript(ImageGenerator.class, JET_NAME));
-            scriptEngine.eval(wrapFunctionScript(Environment.class, JET_NAME));
-            scriptEngine.eval(wrapFunctionScript(JJSPRuntime.class, JET_NAME));
+            scriptEngine.eval(wrapFunctionScript(ImageGenerator.class, JJSP_NAME));
+            scriptEngine.eval(wrapFunctionScript(Environment.class, JJSP_NAME));
+            scriptEngine.eval(wrapFunctionScript(JJSPRuntime.class, JJSP_NAME));
 
             scriptEngine.eval("delete exit");
             scriptEngine.eval("delete quit");
-            scriptEngine.eval("$p=function(arg){jet.print(arg);};");
-            scriptEngine.eval("$log=function(arg){jet.println(new Date()+':  '+arg);};");
+            scriptEngine.eval("$p=function(arg){jjsp.print(arg);};");
+            scriptEngine.eval("$log=function(arg){jjsp.println(new Date()+':  '+arg);};");
             scriptEngine.eval("console=$log");
             scriptEngine.eval("console.log=$log");
-            scriptEngine.eval("output=function(n, f){if (typeof f == 'function') return jet.putLocal(n, f()); else return jet.putLocal(n, f);}");
+            scriptEngine.eval("output=function(n, f){if (typeof f == 'function') return jjsp.putLocal(n, f()); else return jjsp.putLocal(n, f);}");
 
             scriptEngine.put(ScriptEngine.FILENAME, TOP_LEVEL_SOURCE_PATH);
             scriptEngine.eval(jsSource);
@@ -402,12 +402,12 @@ public class JJSPRuntime extends Environment
         }
     }
 
-    public synchronized String getAndClearJetOutput()
+    public synchronized String getAndClearJJSPOutput()
     {
-        return getAndClearJetOutput(true);
+        return getAndClearJJSPOutput(true);
     }
 
-    public synchronized String getAndClearJetOutput(boolean stripMultipleBlankLines)
+    public synchronized String getAndClearJJSPOutput(boolean stripMultipleBlankLines)
     {
         if (outputWriter.getBuffer().length() == 0)
             return "";
@@ -421,7 +421,7 @@ public class JJSPRuntime extends Environment
         return result;
     }
 
-    public synchronized String getJetOutput()
+    public synchronized String getJJSPOutput()
     {
         outputWriter.flush();
         return outputWriter.toString();
@@ -429,10 +429,10 @@ public class JJSPRuntime extends Environment
 
     public synchronized boolean isTopLevelSource()
     {
-        return isMainJetFile();
+        return isMainJJSPFile();
     }
 
-    public synchronized boolean isMainJetFile()
+    public synchronized boolean isMainJJSPFile()
     {
         return TOP_LEVEL_SOURCE_PATH.equals(getCurrentSourcePath());
     }
@@ -440,7 +440,7 @@ public class JJSPRuntime extends Environment
     public synchronized String getCurrentSourcePath()
     {
         if (scriptEngine == null)
-            return "<Unknown Jet Source>";
+            return "<Unknown JJSP Source>";
         return (String) scriptEngine.get(ScriptEngine.FILENAME);
     }
 
@@ -482,21 +482,21 @@ public class JJSPRuntime extends Environment
             String jsSource = uriContent.asString();
 
             String lower = sourcePath.toLowerCase();
-            if (lower.endsWith(".jet"))
+            if (lower.endsWith(".jjsp") || lower.endsWith(".jet"))
             {
-                ScriptParser jetParser = new ScriptParser(jsSource);
-                jsSource = jetParser.translateToJavascript();
-                description = "Jet";
+                ScriptParser jjspParser = new ScriptParser(jsSource);
+                jsSource = jjspParser.translateToJavascript();
+                description = "JJSP Script";
             }
             else if (lower.endsWith(".jf"))
-                description = "Jet Fuel";
+                description = "JJSP Javascript";
 
             synchronized (this)
             {
                 originalSourcePath = (String) scriptEngine.get(ScriptEngine.FILENAME);
                 scriptEngine.put(ScriptEngine.FILENAME, srcURI.toString());
 
-                outputWriter.write("\nIncluding Jet resource: "+srcURI+"   ");
+                outputWriter.write("\nIncluding JJSP resource: "+srcURI+"   ");
             }
 
             scriptEngine.eval(jsSource);
@@ -531,13 +531,13 @@ public class JJSPRuntime extends Environment
             String jsSource = uriContent.asString();
 
             String lower = sourcePath.toLowerCase();
-            if (lower.endsWith(".jet"))
+            if (lower.endsWith(".jjsp") || lower.endsWith(".jet"))
             {
-                ScriptParser jetParser = new ScriptParser(jsSource);
-                jsSource = jetParser.translateToJavascript();
+                ScriptParser jjspParser = new ScriptParser(jsSource);
+                jsSource = jjspParser.translateToJavascript();
             }
             else if (!lower.endsWith(".js"))
-                throw new IllegalStateException("Can only use the 'parse' command with JET and JS source files");
+                throw new IllegalStateException("Can only use the 'parse' command with JJSP and JS source files");
 
             originalSourcePath = (String) scriptEngine.get(ScriptEngine.FILENAME);
             scriptEngine.put(ScriptEngine.FILENAME, srcURI.toString());
@@ -1107,7 +1107,7 @@ public class JJSPRuntime extends Environment
     public synchronized HTTPRequestFilter setMainRequestFilter(HTTPRequestFilter filter)
     {
         if (initialised())
-            throw new IllegalStateException("Cannot set main request filter after Jet has started");
+            throw new IllegalStateException("Cannot set main request filter after JJSP has started");
         if (filter.getClass().toString().indexOf("$$NashornJavaAdapter") >= 0)
             throw new IllegalStateException("Invalid filter object in setMainRequestFilter - wrap javascript functions first with a call to 'createFilter'");
 
@@ -1148,7 +1148,7 @@ public class JJSPRuntime extends Environment
     public synchronized HTTPServerLogger setHTTPLogDirectory(File logDir, boolean autoFlush) throws IOException
     {
         if (initialised())
-            throw new IllegalStateException("Cannot set HTTP Log Directory after Jet has started");
+            throw new IllegalStateException("Cannot set HTTP Log Directory after JJSP has started");
         this.httpLogger = new DirectoryFileLogger(10, DirectoryFileLogger.DAILY, logDir);
         return httpLogger;
     }
@@ -1156,7 +1156,7 @@ public class JJSPRuntime extends Environment
     public synchronized HTTPServerLogger setHTTPLogger(HTTPServerLogger httpLogger)
     {
         if (initialised())
-            throw new IllegalStateException("Cannot set HTTP Logger after Jet has started");
+            throw new IllegalStateException("Cannot set HTTP Logger after JJSP has started");
         this.httpLogger = httpLogger;
         return httpLogger;
     }

@@ -58,7 +58,7 @@ public class JDE extends Application
     private OutputTabs outputTabs1, outputTabs2;
 
     private static File jdeCacheDir;
-    private static Environment jetEnv; 
+    private static Environment jjspEnv; 
 
     class JDEMenus extends HBox
     {
@@ -91,7 +91,7 @@ public class JDE extends Application
 
             MenuBar right = new MenuBar();
             Menu mm = new Menu("Local File Server Port: "+port);
-            right.getMenus().addAll(new Menu("Jet Version: "+Utils.getJarVersion()), mm);
+            right.getMenus().addAll(new Menu("JJSP Version: "+Utils.getJarVersion()), mm);
 
             try
             {
@@ -115,8 +115,8 @@ public class JDE extends Application
             
             dialogStage.setTitle("JDE HTTP Server Log");
             dialogStage.setScene(new Scene(bp));
-            if (iconCache.getJetImage() != null)
-                dialogStage.getIcons().add(iconCache.getJetImage());
+            if (iconCache.getJJSPImage() != null)
+                dialogStage.getIcons().add(iconCache.getJJSPImage());
             dialogStage.sizeToScene();
             dialogStage.show();
         }
@@ -138,7 +138,7 @@ public class JDE extends Application
                                try
                                {
                                    if ((name != null) && (name.length() > 1)) 
-                                       jetEnv.addService(name);
+                                       jjspEnv.addService(name);
                                }
                                catch (Exception e) {}
                                
@@ -162,8 +162,8 @@ public class JDE extends Application
             
             dialogStage.setTitle("New Service Name:");
             dialogStage.setScene(new Scene(bp));
-            if (iconCache.getJetImage() != null)
-                dialogStage.getIcons().add(iconCache.getJetImage());
+            if (iconCache.getJJSPImage() != null)
+                dialogStage.getIcons().add(iconCache.getJJSPImage());
             dialogStage.sizeToScene();
             dialogStage.setResizable(false);
             serviceName.setOnAction((evt) -> ok.fire());
@@ -208,14 +208,15 @@ public class JDE extends Application
             newFile.setOnAction(event -> 
                                     { 
                                         fileChooser.getExtensionFilters().setAll(
-                                                                                 new FileChooser.ExtensionFilter("Jet Source Code", "*.jet"),
-                                                                                 new FileChooser.ExtensionFilter("Jet Fuel Code", "*.jf"), 
+                                                                                 new FileChooser.ExtensionFilter("JJSP Script", "*.jjsp"),
+                                                                                 new FileChooser.ExtensionFilter("JJSP Code", "*.jf"), 
                                                                                  new FileChooser.ExtensionFilter("Javascript", "*.js"), 
                                                                                  new FileChooser.ExtensionFilter("Text Files", "*.txt"), 
                                                                                  new FileChooser.ExtensionFilter("Cascading Style Sheet", "*.css"), 
                                                                                  new FileChooser.ExtensionFilter("HTML", "*.html", "*.htm"), 
                                                                                  new FileChooser.ExtensionFilter("Comma Separated Values", "*.csv"),
-                                                                                 new FileChooser.ExtensionFilter("SQL Script", "*.sql")
+                                                                                 new FileChooser.ExtensionFilter("SQL Script", "*.sql"),
+                                                                                 new FileChooser.ExtensionFilter("Jet Source Code", "*.jet")
                                                                                  );
 
                                         File selected = fileChooser.showSaveDialog(getScene().getWindow()); 
@@ -246,7 +247,7 @@ public class JDE extends Application
                                              return;
                                          try
                                          {
-                                             jetEnv.addLibrary(selected.getName(), Utils.load(selected));
+                                             jjspEnv.addLibrary(selected.getName(), Utils.load(selected));
                                          }
                                          catch (Exception e) {}
 
@@ -308,7 +309,7 @@ public class JDE extends Application
             try
             {
                 File svcDir = new File(uri);
-                if (!svcDir.getParentFile().toURI().equals(jetEnv.getServicesURI()))
+                if (!svcDir.getParentFile().toURI().equals(jjspEnv.getServicesURI()))
                     return null;
 
                 String serviceName = svcDir.getName();
@@ -326,7 +327,7 @@ public class JDE extends Application
                                                     {
                                                         File ff = (File) selectedFiles.get(i);
                                                         byte[] data = Utils.load(ff);
-                                                        jetEnv.addServiceFile(serviceName, ff.getName(), data);
+                                                        jjspEnv.addServiceFile(serviceName, ff.getName(), data);
                                                     }
                                                 }
                                                 catch (Exception e) {}
@@ -545,7 +546,7 @@ public class JDE extends Application
 
         protected ClassLoader getClassLoaderForDatabaseDriver() throws Exception
         {
-            return jetEnv.createLibraryLoader();
+            return jjspEnv.createLibraryLoader();
         }
     }
     
@@ -748,7 +749,7 @@ public class JDE extends Application
         boolean useTextEditorFor(URI uri)
         {
             String fullPath = uri.toString().toLowerCase();
-            return fullPath.endsWith(".sh") || fullPath.endsWith(".txt") || fullPath.endsWith(".java") || fullPath.endsWith(".css") || fullPath.endsWith(".jet") || fullPath.endsWith(".md") || fullPath.endsWith("makefile");
+            return fullPath.endsWith(".sh") || fullPath.endsWith(".txt") || fullPath.endsWith(".java") || fullPath.endsWith(".css") || fullPath.endsWith(".jjsp") || fullPath.endsWith(".jet") || fullPath.endsWith(".md") || fullPath.endsWith("makefile");
         }
 
         boolean openNewURITab(URI uri)
@@ -811,7 +812,7 @@ public class JDE extends Application
                 }
             }
 
-            if (fullPath.endsWith(".jet"))
+            if (fullPath.endsWith(".jjsp") || fullPath.endsWith(".jet"))
                 addedComponent = addNewTab(new SourcePane(uri, sharedState));
             else if (fullPath.endsWith(".jf"))
                 addedComponent = addNewTab(new SourcePane(uri, sharedState));
@@ -1161,9 +1162,9 @@ public class JDE extends Application
             Scene scene = new Scene(main, uiState.screenWidth, uiState.screenHeight, Color.WHITE);
             scene.addEventFilter(KeyEvent.KEY_RELEASED, (keyEvent) -> {if (keyEvent.getCode() == KeyCode.F6) {keyEvent.consume(); runMainTab(); }});
  
-            primaryStage.setTitle("Jet Browser");
-            if (iconCache.getJetImage() != null)
-                primaryStage.getIcons().add(iconCache.getJetImage());
+            primaryStage.setTitle("JJSP Browser");
+            if (iconCache.getJJSPImage() != null)
+                primaryStage.getIcons().add(iconCache.getJJSPImage());
             primaryStage.setScene(scene);
             primaryStage.setMinWidth(700);
             primaryStage.setMinHeight(400);
@@ -1231,13 +1232,13 @@ public class JDE extends Application
 
     public static Environment getEnvironment()
     {
-        return jetEnv;
+        return jjspEnv;
     }
 
     public static void main(String[] args) throws Exception
     { 
-        jetEnv = new Environment(Args.parse(args));
-        File cacheDir = jetEnv.getLocalCacheDir();
+        jjspEnv = new Environment(Args.parse(args));
+        File cacheDir = jjspEnv.getLocalCacheDir();
         jdeCacheDir = new File(cacheDir, ".jde");
         jdeCacheDir.mkdirs();
 

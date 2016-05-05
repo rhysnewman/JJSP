@@ -30,8 +30,8 @@ import javax.script.*;
 import jdk.nashorn.api.scripting.*;
 
 import jjsp.http.*;
-import jjsp.http.filters.*;
 import jjsp.util.*;
+import jjsp.http.filters.*;
 
 public class Engine implements Runnable
 {
@@ -41,7 +41,7 @@ public class Engine implements Runnable
     private final URI rootURI, sourceURI;
 
     private HTTPServer server;
-    private JJSPRuntime jetRuntime;
+    private JJSPRuntime jjspRuntime;
     private boolean started, stop;
 
     public Engine(String jsSrc, URI sourceURI, URI rootURI, File localCacheDir, Map args)
@@ -70,7 +70,7 @@ public class Engine implements Runnable
 
     public boolean stopRequested()
     {
-        JJSPRuntime jr = jetRuntime;
+        JJSPRuntime jr = jjspRuntime;
         if (jr == null)
             return false;
         return jr.stopRequested();
@@ -92,8 +92,8 @@ public class Engine implements Runnable
 
         try
         {
-            if (jetRuntime != null)
-                jetRuntime.engineStopped();
+            if (jjspRuntime != null)
+                jjspRuntime.engineStopped();
         }
         catch (Throwable t)
         {
@@ -127,7 +127,7 @@ public class Engine implements Runnable
 
     public synchronized JJSPRuntime getRuntime()
     {
-        return jetRuntime;
+        return jjspRuntime;
     }
 
     public void print(String s)
@@ -167,7 +167,7 @@ public class Engine implements Runnable
         rt.log(level, msg);
     }
 
-    protected void compileJet(JJSPRuntime runtime, String jsSrc) throws Exception
+    protected void compile(JJSPRuntime runtime, String jsSrc) throws Exception
     {
         getRuntime().init(jsSrc);
     }
@@ -187,11 +187,11 @@ public class Engine implements Runnable
         if (stop)
             return null;
 
-        HTTPRequestFilter mainFilter = jetRuntime.getMainRequestFilter();
+        HTTPRequestFilter mainFilter = jjspRuntime.getMainRequestFilter();
         if (mainFilter == null)
             return null;
 
-        server = new HTTPServer(mainFilter, getHTTPLog(jetRuntime));
+        server = new HTTPServer(mainFilter, getHTTPLog(jjspRuntime));
         return server;
     }
 
@@ -226,7 +226,7 @@ public class Engine implements Runnable
         JJSPRuntime rt = getRuntime();
         if (rt == null)
             return "";
-        return rt.getAndClearJetOutput();
+        return rt.getAndClearJJSPOutput();
     }
     
     public void run()
@@ -240,13 +240,13 @@ public class Engine implements Runnable
 
             synchronized (this)
             {
-                jetRuntime = jr;
+                jjspRuntime = jr;
             }
 
-            compileJet(jr, jsSrc);
+            compile(jr, jsSrc);
             if (createServer(jr) == null)
             {
-                launchComplete(null, jetRuntime, false);
+                launchComplete(null, jjspRuntime, false);
                 return;
             }
 
@@ -284,7 +284,7 @@ public class Engine implements Runnable
                 serverListening(server, info, listenError);
             }
 
-            launchComplete(server, jetRuntime, isListening);
+            launchComplete(server, jjspRuntime, isListening);
             if (!isListening)
                 stop();
             launchOK = true;
@@ -304,15 +304,15 @@ public class Engine implements Runnable
     {
         private long lastTimePrintout;
 
-        DefaultEngine(String jsSrc, File srcFile, File rootDir, File cacheDir, Map jetArgs) 
+        DefaultEngine(String jsSrc, File srcFile, File rootDir, File cacheDir, Map args) 
         {
-            super(jsSrc, srcFile.toURI(), rootDir.toURI(), cacheDir, jetArgs);
+            super(jsSrc, srcFile.toURI(), rootDir.toURI(), cacheDir, args);
         }
 
-        protected void compileJet(JJSPRuntime runtime, String jsSrc) throws Exception
+        protected void compile(JJSPRuntime runtime, String jsSrc) throws Exception
         {
-            log(Level.INFO, "Compiling JET Source from "+getSourceURI());
-            super.compileJet(runtime, jsSrc);
+            log(Level.INFO, "Compiling JJSP Source from "+getSourceURI());
+            super.compile(runtime, jsSrc);
             log(Level.INFO, "Compilation Complete");
         }
 
@@ -324,7 +324,7 @@ public class Engine implements Runnable
 
         protected void runtimeError(Throwable t)
         {
-            log(Level.SEVERE, "JET Server Runtime Error");
+            log(Level.SEVERE, "JJSP Server Runtime Error");
             printStackTrace(t);
         }
         
@@ -355,25 +355,25 @@ public class Engine implements Runnable
         }
     }
     
-    public static void main(String[] args) throws Exception
+    public static void main(String[] argList) throws Exception
     {
-        Map jetArgs = Args.parse(args);
+        Map args = Args.parse(argList);
         String fileName = Args.getArg("src", null);
 
-        if ((args.length == 0) || (fileName == null))
+        if ((argList.length == 0) || (fileName == null))
         {
-            System.out.println("Usage: -src <source file> [-root <root dir>] [-cache <Jet Cache Directory>] [...other args]");
+            System.out.println("Usage: -src <source file> [-root <root dir>] [-cache <JJSP Cache Directory>] [...other args]");
             System.out.println();
-            System.out.println("        src file : The main Jet source file name (required)");
-            System.out.println("        root     : The directory name of the Jet root, defaults to the current working directory.");
-            System.out.println("        cache    : The directory name of the Jet file cache directory, defaults to 'jetcache' in the process working directory.");
+            System.out.println("        src file : The main JJSP source file name (required)");
+            System.out.println("        root     : The directory name of the JJSP root, defaults to the current working directory.");
+            System.out.println("        cache    : The directory name of the JJSP file cache directory, defaults to 'jjspcache' in the process working directory.");
             System.out.println("        logDir   : The log directory name relative to the current working directory (defaults to 'logs')");
             System.out.println("   ");
             System.out.println("   Other arguments are allowed and are passed on to the JJSPRuntime");
             System.out.println("   NOTE: if not already specified, an additional option 'mode = production' is automatically added");
             System.out.println();
             if (fileName == null)
-                throw new NullPointerException("No Jet Source file specified; use -src option");
+                throw new NullPointerException("No JJSP Source file specified; use -src option");
             return;
         }
     
@@ -386,14 +386,14 @@ public class Engine implements Runnable
         Log.set(logDir);
         Logger log = Logger.getGlobal();
 
-        jetArgs.remove("src");
-        jetArgs.remove("root");
-        jetArgs.remove("cache");
-        jetArgs.remove("logDir");
-        if (jetArgs.get("mode") == null)
-            jetArgs.put("mode", "production");
+        args.remove("src");
+        args.remove("root");
+        args.remove("cache");
+        args.remove("logDir");
+        if (args.get("mode") == null)
+            args.put("mode", "production");
         
-        //System.out.println(jetArgs);
+        //System.out.println(jjspArgs);
         File srcFile = new File(fileName);
         if (!srcFile.exists() || !srcFile.isFile())
             throw new IllegalStateException("Source file '"+srcFile+"' not found");
@@ -406,10 +406,10 @@ public class Engine implements Runnable
             cacheDir.mkdirs();
 
         String jsSrc = Utils.loadText(srcFile);
-        if (srcFile.getName().endsWith(".jet"))
+        if (srcFile.getName().endsWith(".jet") || srcFile.getName().endsWith(".jjsp"))
             jsSrc = new ScriptParser(jsSrc).translateToJavascript();
 
-        Engine engine = new DefaultEngine(jsSrc, srcFile, rootDir, cacheDir, jetArgs);
+        Engine engine = new DefaultEngine(jsSrc, srcFile, rootDir, cacheDir, args);
         engine.start();
         
         while (true)
@@ -433,7 +433,7 @@ public class Engine implements Runnable
         if (log != null)
         {
             log.log(Level.INFO, output);
-            log.log(Level.INFO, "JET Process Exit");
+            log.log(Level.INFO, "JJSP Process Exit");
         }
 
         try

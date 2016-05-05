@@ -36,7 +36,7 @@ public class Environment extends ImageGenerator
 {
     public static final String LIB = "lib/";
     public static final String SERVICES = "services/";
-    public static final String CACHE_DIR = "jetcache/";
+    public static final String CACHE_DIR = "jjspcache/";
     
     private static final String LIB_PATH = LIB;
     private static final String SERVICES_PATH = LIB+SERVICES;
@@ -287,25 +287,25 @@ public class Environment extends ImageGenerator
 
     public URLClassLoader createJarLoaderFromRootURI() throws IOException
     {
-        HashSet jetLoaderUrls = new HashSet();
+        HashSet jjspLoaderUrls = new HashSet();
         try
         {
             URL[] urls = ((URLClassLoader) getClass().getClassLoader()).getURLs(); 
             for (int i=0; i<urls.length; i++)
-                jetLoaderUrls.add(urls[i]);
+                jjspLoaderUrls.add(urls[i]);
         }
         catch (Exception e) {}
         
         ArrayList ll = new ArrayList();
         URL[] rootJarURLs = getJarURLsFromDirectoryURI(getRootURI());
         for (int i=0; i<rootJarURLs.length; i++)
-            if (!jetLoaderUrls.contains(rootJarURLs[i]))
+            if (!jjspLoaderUrls.contains(rootJarURLs[i]))
                 ll.add(rootJarURLs[i]);
 
         //Make the root and library Loaders the same to make it easy to code Java code loading other resources
         URL[] libJarURIs = getJarURLsFromDirectoryURI(getLibraryURI());
         for (int i=0; i<libJarURIs.length; i++)
-            if (!jetLoaderUrls.contains(libJarURIs[i]))
+            if (!jjspLoaderUrls.contains(libJarURIs[i]))
                 ll.add(libJarURIs[i]);
 
         URL[] clUrls = new URL[ll.size()];
@@ -887,7 +887,7 @@ public class Environment extends ImageGenerator
         }
         else
         {
-            // Really only works for the HTTP result from a JetFuel localStore handler, which lists contents by default 1 per line.
+            // Really only works for the HTTP result from a JJSP localStore handler, which lists contents by default 1 per line.
             InputStream in = dirURI.toURL().openStream();
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
             while (true)
