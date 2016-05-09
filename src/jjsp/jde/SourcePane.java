@@ -105,7 +105,7 @@ public class SourcePane extends JDETextEditor
         jjspEngineOutput.hideSearchBox();
     }
     
-    protected void init(SharedTextEditorState sharedState)
+    protected synchronized void init(SharedTextEditorState sharedState)
     {
         if (getURI().toString().endsWith(".jjsp") || getURI().toString().endsWith(".jet"))
             editor = new JDEditor();
@@ -175,7 +175,7 @@ public class SourcePane extends JDETextEditor
         return fileChooser;
     }
 
-    public Menu[] createMenus()
+    public synchronized Menu[] createMenus()
     {
         MenuItem compile = new MenuItem("Compile + Run");
         compile.setAccelerator(new KeyCodeCombination(KeyCode.F5));
@@ -379,7 +379,6 @@ public class SourcePane extends JDETextEditor
     {
         if ((text == null) || (text.length() == 0))
             return;
-        
         statusMessage += text;
         
         jjspEngineOutput.output.setText("");
@@ -422,10 +421,8 @@ public class SourcePane extends JDETextEditor
         generatedOutputs = null;
         localStoreView.setEnvironment(null);
 
-        if (jjspEngine != null)
+        if ((jjspEngine != null) && !jjspEngine.stopped())
             jjspEngine.stop();
-
-        setDisplayed(true);
 
         jjspEngine = null;
         appendStatus(new Date()+" JJSP Engine stopped", null);
@@ -475,7 +472,6 @@ public class SourcePane extends JDETextEditor
             println("\n\nCompilation Completed OK "+finishTime);
             println("It took "+timeTaken+" ms.");
             println();
-            
         }
 
         class JDELogger extends Logger
@@ -623,7 +619,7 @@ public class SourcePane extends JDETextEditor
         {
             String jsSrc = getCompiledJS();
             Map args = Args.parseArgs(argList);
-            
+
             synchronized (this)
             {
                 jjspEngine = new JDEEngine(jsSrc, getURI(), JDE.getEnvironment(), args);
@@ -643,6 +639,8 @@ public class SourcePane extends JDETextEditor
         JDEEngine je = jjspEngine;
         if ((je != null) && je.stopRequested() && !je.stopped())
             je.stop();
+        if ((je != null) && je.stopped())
+            closeServices();
 
         jjspEngineOutput.output.setDisplayed(isShowing);
         editor.setDisplayed(isShowing);

@@ -377,7 +377,7 @@ public class JDETextEditor extends JDEComponent
             lastModified = getLastModifiedFromURI();
             editor.markEdited(false);
             editor.setEditable(true);
-            // Sara doesn't like this: editor.discardEditHistory();
+            // editor.discardEditHistory();
             return true;
         }
         catch (Exception e)

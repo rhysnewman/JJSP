@@ -70,9 +70,10 @@ public class Engine implements Runnable
 
     public boolean stopRequested()
     {
-        JJSPRuntime jr = jjspRuntime;
+        JJSPRuntime jr = getRuntime();
         if (jr == null)
             return false;
+
         return jr.stopRequested();
     }
 
@@ -92,8 +93,9 @@ public class Engine implements Runnable
 
         try
         {
-            if (jjspRuntime != null)
-                jjspRuntime.engineStopped();
+            JJSPRuntime jr = getRuntime();
+            if (jr != null)
+                jr.engineStopped();
         }
         catch (Throwable t)
         {
@@ -283,7 +285,7 @@ public class Engine implements Runnable
                     
                 serverListening(server, info, listenError);
             }
-
+            
             launchComplete(server, jjspRuntime, isListening);
             if (!isListening)
                 stop();

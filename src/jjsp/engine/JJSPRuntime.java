@@ -607,7 +607,6 @@ public class JJSPRuntime extends Environment
             Class[] argTypes = cc[i].getParameterTypes();
             if (argTypes.length != 2)
                 continue;
-
             if (Map.class.isAssignableFrom(argTypes[0]) && ClassLoader.class.isAssignableFrom(argTypes[1]))
             {
                 instance = cc[i].newInstance(new Object[]{propMap, cl});
