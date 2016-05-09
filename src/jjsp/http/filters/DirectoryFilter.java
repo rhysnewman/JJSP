@@ -52,6 +52,8 @@ public class DirectoryFilter extends AbstractRequestFilter
             throw new IOException(directory+" does not exist");
         if (!directory.isDirectory())
             throw new IOException(directory+" is not a directory");
+        if (pathPrefix == null)
+            throw new IOException("Path Prefix cannot be null - use '' if no prefix is required");
         
         rootDirectory = directory;
         cacheTime = 3600;
@@ -66,6 +68,8 @@ public class DirectoryFilter extends AbstractRequestFilter
             pathPrefix = "";
         else if (!prefix.startsWith("/"))
             pathPrefix = "/"+prefix;
+        else
+            pathPrefix = prefix;
     }
 
     public void setUseCache(boolean value)
@@ -435,7 +439,6 @@ public class DirectoryFilter extends AbstractRequestFilter
         
         String urlPath = reqHeaders.getPath();
         String pathString = getResourcePathForRequestPath(urlPath);
-        
         if (pathString == null)
             return null;
 

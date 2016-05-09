@@ -689,7 +689,7 @@ public class ScriptParser
                             }
                             else
                             {
-                                writer.write("(function(){var foreach = {}; foreach.values = ("+obj+"); foreach.array = foreach.values; if (!Array.isArray(foreach.array)) foreach.array = Object.keys(foreach.values); for (foreach.count=0; foreach.count<foreach.array.length; foreach.count++) { foreach.key = foreach.array[foreach.count]; foreach.value = foreach.values[foreach.key]; var "+varName+" = foreach.key;");
+                                writer.write("(function(){var foreach = {}; foreach.values = ("+obj+"); foreach.array = foreach.values; foreach.type=0; if (foreach.array instanceof Java.type(\"java.lang.Object[]\")) foreach.type=1; else if (!Array.isArray(foreach.array)) foreach.array = Object.keys(foreach.values); for (foreach.count=0; foreach.count<foreach.array.length; foreach.count++) { var "+varName+"=0; if (foreach.type==0) {foreach.key = foreach.array[foreach.count]; foreach.value = foreach.values[foreach.key]; "+varName+"=foreach.key;} else {foreach.key = foreach.count; foreach.value = foreach.array[foreach.count]; "+varName+" = foreach.value;} ");
                             }
                             openingBraceType.push("FOREACH");
                         }
