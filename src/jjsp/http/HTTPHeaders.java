@@ -164,17 +164,11 @@ public class HTTPHeaders
             String startSpec = spec.substring(i1,i2).trim();
             if (startSpec.length() > 0)
                 start = Long.parseLong(startSpec);
-            
+
             if (i2+1 < spec.length())
             {
                 String endSpec = spec.substring(i2+1).trim();
                 end = Long.parseLong(endSpec);
-            }
-
-            if ((start > end) || (start < 0))
-            {
-                start = 0;
-                end = -1;
             }
             return new long[]{start, end};
         }
@@ -275,6 +269,8 @@ public class HTTPHeaders
             return "text/xml; charset=utf-8";
         if (fileName.endsWith(".wmv"))
             return "video/x-ms-wmv";
+        if (fileName.endsWith(".mp4") || fileName.endsWith(".mpeg"))
+            return "video/mp4";
         if (fileName.endsWith(".xpi"))
             return "application/x-xpinstall";
 

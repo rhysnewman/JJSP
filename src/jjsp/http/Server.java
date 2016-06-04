@@ -118,13 +118,16 @@ public abstract class Server implements ThreadFactory
 
     class SocketHandler implements Runnable
     {
-        private int port;
-        private Socket socket;
+        private final int port;
+        private final Socket socket;
+        private final SocketAcceptor acceptor;
+
         private boolean isSecure;
         private InputStream input;
         private OutputStream output;
-        private SocketAcceptor acceptor;
         private InetSocketAddress clientAddress;
+
+        private volatile Thread executingThread;
 
         SocketHandler(SocketAcceptor acceptor, Socket s, int port, boolean isSecure)
         {
@@ -138,19 +141,7 @@ public abstract class Server implements ThreadFactory
         {
             try
             {
-                input.close();
-            }
-            catch (Throwable e) {}
-
-            try
-            {
-                output.flush();
-            }
-            catch (Throwable e) {}
-
-            try
-            {
-                output.close();
+                executingThread.interrupt();
             }
             catch (Throwable e) {}
 
@@ -165,6 +156,7 @@ public abstract class Server implements ThreadFactory
 
         public void run()
         {
+            executingThread = Thread.currentThread();
             InetSocketAddress clientAddress = null;
             output = null;
             input = null;
