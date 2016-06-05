@@ -238,6 +238,12 @@ public class HTTPResponseHeaders extends HTTPHeaders
         configure(HTTP_PARTIAL_CONTENT, "Partial Content");
     }
 
+    public void configureAsPartialContent(long startByteInclusive, long endByteInclusive, long totalBytes)
+    {
+        configure(HTTP_PARTIAL_CONTENT, "Partial Content");
+        setHeader("Content-Range", "bytes "+startByteInclusive+"-"+endByteInclusive+"/"+totalBytes);
+    }
+
     public void configureAsNotAuthorized(boolean allowBasicAuth)
     {
         configureAsNotAuthorised(allowBasicAuth);
