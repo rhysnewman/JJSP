@@ -251,14 +251,27 @@ public class HTTPInputStream extends InputStream
     {
         if (contentStream == null)
             return new byte[0];
+
+        int len = -1;
+        if (contentStream instanceof UnchunkedContentStream) 
+        {
+            len = (int)((UnchunkedContentStream)contentStream).length;
+            if (len >= maxLength)
+            {
+                try
+                {
+                    close();
+                }
+                catch (Exception e) {}
+                
+                throw new IOException("POST content too long ("+len+")");
+            }
+        }
+
         try
         {
             if (contentStream instanceof UnchunkedContentStream) 
             {
-                int len = (int)((UnchunkedContentStream)contentStream).length;
-                if (len >= maxLength)
-                    throw new IOException("POST content too long ("+len+")");
-
                 byte[] raw = new byte[len];
                 int index = 0;
                 while (index < raw.length) 
