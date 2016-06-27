@@ -17,7 +17,7 @@ this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.http;
 
-import java.io.*;
+import java.io.*; 
 import java.net.*;
 import java.util.*;
 
