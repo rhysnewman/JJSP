@@ -253,7 +253,7 @@ public class JSONParser
                 else if (ch == 'u') 
                 {
                     if (i + 5 > json.length())
-                        throw new IllegalStateException("json escape sequence at " + i + " in string at at "+startPos+"  '"+json+"'");
+                        throw new IllegalStateException("Invalid escape sequence at " + i + " in string at "+startPos+"  '"+json+"'");
                   
                     int character = 0;
                     for (int j = i + 1; j<i+5; ++j) 
@@ -267,7 +267,7 @@ public class JSONParser
                         else if (c >= 'A' && c <= 'F')
                             character += (c - 'A') + 10;
                         else
-                            throw new IllegalStateException("json escape sequence at " + i + " in string at at " + startPos + "  '" + json + "'");
+                            throw new IllegalStateException("Invalid escape sequence at " + i + " in string at " + startPos + "  '" + json + "'");
                     }
 
                     buf.append((char) character);
