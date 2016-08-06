@@ -250,6 +250,30 @@ public class JSONParser
                     buf.append('\r');
                 else if (ch == 't')
                     buf.append('\t');
+                else if (ch == 'u') 
+                {
+                    if (i + 5 > json.length())
+                        throw new IllegalStateException("json escape sequence at " + i + " in string at at "+startPos+"  '"+json+"'");
+                  
+                    int character = 0;
+                    for (int j = i + 1; j<i+5; ++j) 
+                    {
+                        char c = json.charAt(j);
+                        character *= 16;
+                        if (c >= '0' && c <= '9')
+                            character += (c - '0');
+                        else if (c >= 'a' && c <= 'f')
+                            character += (c - 'a') + 10;
+                        else if (c >= 'A' && c <= 'F')
+                            character += (c - 'A') + 10;
+                        else
+                            throw new IllegalStateException("json escape sequence at " + i + " in string at at " + startPos + "  '" + json + "'");
+                    }
+
+                    buf.append((char) character);
+                    i += 4;
+                    pos[0] += 4;
+                }                
                 else
                     buf.append(ch);
             }
@@ -335,6 +359,8 @@ public class JSONParser
                 buf.append("\\r");
             else if (ch == '\t')
                 buf.append("\\t");
+            else if (ch >= 128)
+                buf.append("\\u"+String.format("%04X", (int) ch));
             else
                 buf.append(ch);
         }
