@@ -908,6 +908,35 @@ public class Environment extends ImageGenerator
         return result;
     }
 
+    public String[] listDirectory(String dirPath) throws IOException
+    {
+        File root = new File(System.getProperty("user.dir"));
+        try
+        {
+            root = new File(rootURI);
+        }
+        catch (Exception e) {}
+        
+        File dir = new File(root, dirPath);
+        if (!dir.exists() || !dir.isDirectory())
+            return new String[0];
+
+        File[] ff = dir.listFiles();
+        if (ff == null)
+            return new String[0];
+                
+        String[] result = new String[ff.length];
+        for (int i=0; i<ff.length; i++)
+            result[i] = ff[i].getName();
+
+        return result;
+    }
+
+    public String[] list(String dirPath) throws IOException
+    {
+        return listDirectory(dirPath);
+    }
+
     public String[] getServiceNames() throws IOException
     {
         return listURIDirectory(getServicesURI());

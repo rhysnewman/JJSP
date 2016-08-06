@@ -426,16 +426,6 @@ public class SourcePane extends JDETextEditor
 
         jjspEngine = null;
         appendStatus(new Date()+" JJSP Engine stopped", null);
-        
-        for (int i=0; i<5; i++)
-        {
-            System.gc();
-            try
-            {
-                Thread.sleep(100);
-            }
-            catch (Exception e) {}
-        }
     }
 
     public synchronized void stop()
@@ -458,9 +448,6 @@ public class SourcePane extends JDETextEditor
         
         protected void compile(JJSPRuntime runtime, String jsSrc) throws Exception
         {
-            System.gc();
-            System.gc();
-            
             Date startTime = new Date();
             println("Compilation Started "+startTime+"\nJJSP Version"+getVersion());
             println();
