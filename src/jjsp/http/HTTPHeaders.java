@@ -230,6 +230,8 @@ public class HTTPHeaders
 
     public static String guessMIMEType(String fileName, String defaultType)
     {
+        if (fileName == null)
+            return defaultType;
         fileName = fileName.toLowerCase();
 
         if (fileName.endsWith(".html") || fileName.endsWith(".htm") || fileName.endsWith("/") || (fileName.length() == 0))

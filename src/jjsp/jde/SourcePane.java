@@ -419,7 +419,8 @@ public class SourcePane extends JDETextEditor
     {
         setErrorLine(-1);
         generatedOutputs = null;
-        localStoreView.setEnvironment(null);
+        //Don't clear the local store view as this leaves things around to be examined
+        //localStoreView.setEnvironment(null);
 
         if ((jjspEngine != null) && !jjspEngine.stopped())
             jjspEngine.stop();

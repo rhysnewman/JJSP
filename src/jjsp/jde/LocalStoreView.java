@@ -85,12 +85,14 @@ public class LocalStoreView extends BorderPane
 
     class LocalStoreTable extends TableView 
     {
-        Environment jenv;
-        ObservableList logList;
+        private volatile Environment jenv;
+        private ObservableList logList;
 
         LocalStoreTable()
         {
             setEditable(false);
+            logList = FXCollections.observableArrayList();
+            setItems(logList);
             
             TableColumn name = createColumn("Resource Name", 150, 300, (element) -> 
                                      { 
@@ -151,17 +153,18 @@ public class LocalStoreView extends BorderPane
 
         void setEnv(Environment jenv)
         {
-            this.jenv = jenv;
-            logList = FXCollections.observableArrayList();
+            Platform.runLater(() -> {
+                    this.jenv = jenv;
+                    logList.clear();
+                    setItems(logList);
 
-            if (jenv != null)
-            {
-                String[] names = jenv.listLocal();
-                for (int i=0; i<names.length; i++)
-                    logList.add(names[i]);
-            }
-
-            setItems(logList);
+                    if (jenv != null)
+                    {
+                        String[] names = jenv.listLocal();
+                        for (int i=0; i<names.length; i++)
+                            logList.add(names[i]);
+                    }
+                });
         }
 
         private TableColumn createColumn(String title, int minWidth, int prefWidth, Callback cb)
@@ -194,12 +197,15 @@ public class LocalStoreView extends BorderPane
 
         private void updateDetails(String resourceName)
         {
-            if (jenv == null)
+            if ((jenv == null) || (resourceName == null))
                 return;
             byte[] data = jenv.getLocal(resourceName);
-            String textVersion = Utils.toAsciiString(data);
-            
+            if (data == null)
+                return;
+
+            String textVersion = Utils.toAsciiString(data);            
             String mime = HTTPHeaders.guessMIMEType(resourceName);
+
             if ((mime.indexOf("html") >= 0) || textVersion.toLowerCase().indexOf("<html>") >= 0)
             {
 //                WebView webView = new WebView();
@@ -230,11 +236,18 @@ public class LocalStoreView extends BorderPane
                 Image im = new Image(new ByteArrayInputStream(data));
                 
                 ImageView iv = new ImageView(im);
-                iv.setFitWidth(200);
+
+                iv.fitWidthProperty().bind(detailsPane.widthProperty().subtract(15)); 
+                //iv.setFitWidth(200);
                 iv.setPreserveRatio(true);
                 iv.setSmooth(true);
+                
+                BorderPane bp = new BorderPane();
+                bp.setStyle("-fx-border-width: 2px; -fx-border-color: #0052A3");
+                bp.setCenter(iv);
 
-                detailsPane.setCenter(new ScrollPane(iv));
+                ScrollPane sp = new ScrollPane(bp);
+                detailsPane.setCenter(sp);
             }
             else 
             {
