@@ -266,9 +266,9 @@ public class Utils
                     scanDirectory(results, acceptor, ff[i].toURI(), root);
                 else
                 {
-                    URI furi = root.relativize(ff[i].toURI());
-                    if (acceptor.test(furi))
-                        results.add(furi.getPath());
+                    String path = root.relativize(ff[i].toURI()).getPath();
+                    if (acceptor.test(path))
+                        results.add(path);
                 }
             }
 
