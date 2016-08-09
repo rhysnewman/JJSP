@@ -214,7 +214,7 @@ public class Utils
         return toString(load(in));
     }
 
-    private static boolean scanJarFile(Set results, Predicate acceptor, URI jarURI)
+    private static boolean scanJarFile(Set results, Predicate<String> acceptor, URI jarURI)
     {
         JarInputStream jarStream = null;
         try
@@ -251,7 +251,7 @@ public class Utils
         }
     }
 
-    private static boolean scanDirectory(Set results, Predicate acceptor, URI dir, URI root)
+    private static boolean scanDirectory(Set results, Predicate<String> acceptor, URI dir, URI root)
     {
         try
         {
@@ -280,7 +280,7 @@ public class Utils
         }
     }
 
-    public static String[] find(Predicate acceptor, File root)
+    public static String[] find(Predicate<String> acceptor, File root)
     {
         TreeSet ts = new TreeSet();
         URI uri = root.toURI();
@@ -291,7 +291,7 @@ public class Utils
         return result;
     }
 
-    public static String[] find(Predicate acceptor, URI[] uris)
+    public static String[] find(Predicate<String> acceptor, URI[] uris)
     {
         TreeSet ts = new TreeSet();
         for (int i=0; i<uris.length; i++)
@@ -311,7 +311,7 @@ public class Utils
         return result;
     }
 
-    public static String[] find(Predicate acceptor, URLClassLoader classLoader)
+    public static String[] find(Predicate<String> acceptor, URLClassLoader classLoader)
     {
         TreeSet ts = new TreeSet();
 
@@ -334,7 +334,7 @@ public class Utils
         return result;
     }
 
-    public static String[] find(Predicate acceptor)
+    public static String[] find(Predicate<String> acceptor)
     {
         return find(acceptor, (URLClassLoader) Utils.class.getClassLoader());
     }

@@ -49,17 +49,17 @@ public class JarUtils
         return new Manifest(new ByteArrayInputStream(bout.toByteArray()));
     }
 
-    public static byte[] createJar(Manifest mf, Predicate acceptor) throws IOException
+    public static byte[] createJar(Manifest mf, Predicate<String> acceptor) throws IOException
     {
         return createJar(mf, acceptor, (URLClassLoader) JarUtils.class.getClassLoader());
     }
 
-    public static byte[] createJar(Manifest mf, Predicate acceptor, File f) throws IOException
+    public static byte[] createJar(Manifest mf, Predicate<String> acceptor, File f) throws IOException
     {
         return createJar(mf, acceptor, new URLClassLoader(new URL[]{f.toURI().toURL()}));
     }
 
-    public static byte[] createJar(Manifest mf, Predicate acceptor, URLClassLoader source) throws IOException
+    public static byte[] createJar(Manifest mf, Predicate<String> acceptor, URLClassLoader source) throws IOException
     {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         JarOutputStream jout = new JarOutputStream(bout, mf);
