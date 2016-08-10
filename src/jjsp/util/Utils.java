@@ -18,10 +18,8 @@ this program. If not, see http://www.gnu.org/licenses/.
 package jjsp.util;
 
 import java.io.*;
-import java.nio.file.*;
 import java.nio.charset.*;
 import java.net.*;
-import java.text.*;
 import java.security.*;
 import java.util.*;
 import java.util.function.*;
@@ -315,16 +313,14 @@ public class Utils
     public static String[] find(Predicate<String> acceptor, URI[] uris)
     {
         TreeSet ts = new TreeSet();
-        for (int i=0; i<uris.length; i++)
-        {
-            try
-            {
-                if (uris[i].getPath().endsWith(".jar"))
-                    scanJarFile(ts, acceptor, uris[i]);
-                else if (uris[i].getScheme().equals("file"))
-                    scanDirectory(ts, acceptor, uris[i], uris[i]);
+        for (URI uri : uris) {
+            try {
+                if (uri.getPath().endsWith(".jar"))
+                    scanJarFile(ts, acceptor, uri);
+                else if (uri.getScheme().equals("file"))
+                    scanDirectory(ts, acceptor, uri, uri);
+            } catch (Exception e) {
             }
-            catch (Exception e) {}
         }
         
         String[] result = new String[ts.size()];
@@ -332,12 +328,23 @@ public class Utils
         return result;
     }
 
-    public static String[] find(Predicate<String> acceptor, URLClassLoader classLoader)
+    public static String[] find(Predicate<String> acceptor, URLClassLoader classLoader) {
+        return find(acceptor, classLoader, false);
+    }
+
+    public static String[] find(Predicate<String> acceptor, URLClassLoader classLoader, boolean includeParentLoader)
     {
         TreeSet ts = new TreeSet();
 
         URL[] urls = classLoader.getURLs();
         scanURLs(acceptor, ts, urls);
+
+        if (includeParentLoader) {
+            ClassLoader parent = classLoader.getParent();
+            if (parent instanceof URLClassLoader) {
+                scanURLs(acceptor, ts, ((URLClassLoader)parent).getURLs());
+            }
+        }
 
         String[] result = new String[ts.size()];
         ts.toArray(result);
