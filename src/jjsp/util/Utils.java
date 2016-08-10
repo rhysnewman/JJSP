@@ -220,6 +220,17 @@ public class Utils
         try
         {
             jarStream = new JarInputStream(jarURI.toURL().openStream());
+            Manifest manifest = jarStream.getManifest();
+            if (manifest != null) {
+                Attributes attrs = manifest.getMainAttributes();
+                if (attrs != null) {
+                    String classPath = attrs.getValue(Attributes.Name.CLASS_PATH);
+                    if (classPath != null) {
+                        URL[] urls = parseCP(jarURI.toURL(), classPath);
+                        scanURLs(acceptor, results, urls);
+                    }
+                 }
+            }
 
             while (true)
             {
@@ -249,6 +260,16 @@ public class Utils
             }
             catch (Exception ee) {}
         }
+    }
+
+    private static URL[] parseCP(URL root, String classPath) throws MalformedURLException {
+        StringTokenizer st = new StringTokenizer(classPath);
+        URL[] urls = new URL[st.countTokens()];
+        for(int index = 0; st.hasMoreTokens(); index++) {
+            urls[index] = new URL(root, st.nextToken());
+        }
+
+        return urls;
     }
 
     private static boolean scanDirectory(Set results, Predicate<String> acceptor, URI dir, URI root)
@@ -316,22 +337,24 @@ public class Utils
         TreeSet ts = new TreeSet();
 
         URL[] urls = classLoader.getURLs();
-        for (int i=0; i<urls.length; i++)
-        {
-            try
-            {
-                URI uri = urls[i].toURI();
+        scanURLs(acceptor, ts, urls);
+
+        String[] result = new String[ts.size()];
+        ts.toArray(result);
+        return result;
+    }
+
+    private static void scanURLs(Predicate<String> acceptor, Set ts, URL[] urls) {
+        for (URL url : urls) {
+            try {
+                URI uri = url.toURI();
                 if (uri.getPath().endsWith(".jar"))
                     scanJarFile(ts, acceptor, uri);
                 else if (uri.getScheme().equals("file"))
                     scanDirectory(ts, acceptor, uri, uri);
+            } catch (Exception e) {
             }
-            catch (Exception e) {}
         }
-        
-        String[] result = new String[ts.size()];
-        ts.toArray(result);
-        return result;
     }
 
     public static String[] find(Predicate<String> acceptor)
