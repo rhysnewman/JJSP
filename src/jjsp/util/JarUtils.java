@@ -19,9 +19,7 @@ package jjsp.util;
 
 import java.io.*;
 import java.net.*;
-import java.text.*;
 import java.util.*;
-import java.util.zip.*;
 import java.util.jar.*;
 import java.util.function.*;
 
@@ -59,20 +57,25 @@ public class JarUtils
         return createJar(mf, acceptor, new URLClassLoader(new URL[]{f.toURI().toURL()}));
     }
 
-    public static byte[] createJar(Manifest mf, Predicate<String> acceptor, URLClassLoader source) throws IOException
+    public static byte[] createJar(Manifest mf, Predicate<String> acceptor, URLClassLoader source) throws IOException {
+        return createJar(mf, acceptor, source, false);
+    }
+
+    public static byte[] createJar(Manifest mf, Predicate<String> acceptor, URLClassLoader source, boolean includeParentLoader) throws IOException
     {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         JarOutputStream jout = new JarOutputStream(bout, mf);
         
-        String[] resourceNames = Utils.find(acceptor, source);
-        for (int j=0; j<resourceNames.length; j++)
-        {
-            byte[] rawResource = Utils.load(resourceNames[j], source);
-            JarEntry entry = new JarEntry(resourceNames[j]);
-            jout.putNextEntry(entry);
-            jout.write(rawResource);
-            jout.flush();
-            jout.closeEntry();
+        String[] resourceNames = Utils.find(acceptor, source, includeParentLoader);
+        for (String resourceName : resourceNames) {
+            byte[] rawResource = Utils.load(resourceName, source);
+            if (rawResource != null) {
+                JarEntry entry = new JarEntry(resourceName);
+                jout.putNextEntry(entry);
+                jout.write(rawResource);
+                jout.flush();
+                jout.closeEntry();
+            }
         }
         jout.close();
 
