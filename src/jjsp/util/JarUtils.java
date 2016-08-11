@@ -68,13 +68,18 @@ public class JarUtils
         
         String[] resourceNames = Utils.find(acceptor, source, includeParentLoader);
         for (String resourceName : resourceNames) {
-            byte[] rawResource = Utils.load(resourceName, source);
-            if (rawResource != null) {
-                JarEntry entry = new JarEntry(resourceName);
-                jout.putNextEntry(entry);
-                jout.write(rawResource);
-                jout.flush();
-                jout.closeEntry();
+            try {
+                byte[] rawResource = Utils.load(resourceName, source);
+                if (rawResource != null) {
+                    JarEntry entry = new JarEntry(resourceName);
+                    jout.putNextEntry(entry);
+                    jout.write(rawResource);
+                    jout.flush();
+                    jout.closeEntry();
+                }
+            }
+            catch (IOException e) {
+                throw new IOException("Unable to load resource " + resourceName, e);
             }
         }
         jout.close();
