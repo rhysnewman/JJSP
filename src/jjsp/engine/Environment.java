@@ -475,6 +475,7 @@ public class Environment extends ImageGenerator
             URI uri = (URI) itt.next();
             try
             {
+                path = escapeResourcePath(path);
                 URI resolvedURI = uri.resolve(path);
                 byte[] data = Utils.load(resolvedURI);
                 return new URIContent(resolvedURI, data);
@@ -1180,6 +1181,11 @@ public class Environment extends ImageGenerator
     public SQLDriver createSQLDriver(Map props, ClassLoader loader) throws Exception
     {
         return new SQLDriver(props, loader);
+    }
+
+    public String escapeResourcePath(String path)
+    {
+        return checkLocalResourcePath(path).substring(1);
     }
 
     public static String checkLocalResourcePath(String path)

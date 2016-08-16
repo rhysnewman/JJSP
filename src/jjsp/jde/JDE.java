@@ -1154,6 +1154,7 @@ public class JDE extends Application
             hSplit.getItems().addAll(resourceTree, outputSplit);
             hSplit.setDividerPosition(0, resourceTree.getPrefWidth()/uiState.screenWidth);
             SplitPane.setResizableWithParent(resourceTree, Boolean.FALSE);
+            SplitPane.setResizableWithParent(outputTabs2, Boolean.FALSE);
 
             BorderPane main = new BorderPane();
             main.setCenter(hSplit);
