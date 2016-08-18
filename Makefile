@@ -33,7 +33,7 @@ jjsp: compile
 	echo "Specification-Title: JJSP" >> jar.manifest
 	echo "Specification-Version: 3" >> jar.manifest
 	echo "Implementation-Version: $(version)" >> jar.manifest
-	echo "Main-Class: jjsp.jde.JDE" >> jar.manifest
+	echo "Main-Class: jjsp.engine.Launcher" >> jar.manifest
 	echo "Git-Hash: " `git rev-parse HEAD` >> jar.manifest
 	echo "" >> jar.manifest
 
@@ -52,7 +52,7 @@ doc: compile
 	echo "Specification-Title: JJSP" >> jar.manifest
 	echo "Specification-Version: 3" >> jar.manifest
 	echo "Implementation-Version: $(version)" >> jar.manifest
-	echo "Main-Class: jjsp.jde.JDE" >> jar.manifest
+	echo "Main-Class: jjsp.engine.Launcher" >> jar.manifest
 	echo "Git-Hash: " `git rev-parse HEAD` >> jar.manifest
 	echo "Readme: javadoc/Readme.html" >> jar.manifest
 	echo "" >> jar.manifest
