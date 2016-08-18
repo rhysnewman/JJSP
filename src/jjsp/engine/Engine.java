@@ -366,10 +366,12 @@ public class Engine implements Runnable
         {
             System.out.println("Usage: -src <source file> [-root <root dir>] [-cache <JJSP Cache Directory>] [...other args]");
             System.out.println();
-            System.out.println("        src file : The main JJSP source file name (required)");
-            System.out.println("        root     : The directory name of the JJSP root, defaults to the current working directory.");
-            System.out.println("        cache    : The directory name of the JJSP file cache directory, defaults to 'jjspcache' in the process working directory.");
-            System.out.println("        logDir   : The log directory name relative to the current working directory (defaults to 'logs')");
+            System.out.println("        src file   : The main JJSP source file name (required)");
+            System.out.println("        root       : The directory name of the JJSP root, defaults to the current working directory.");
+            System.out.println("        cache      : The directory name of the JJSP file cache directory, defaults to 'jjspcache' in the process working directory.");
+            System.out.println("        logDir     : The log directory name relative to the current working directory (defaults to 'logs')");
+            System.out.println("        nogui      : Specify that JJSP should run as a headless (server only) mode and not launch the JDE");
+            System.out.println("        server     : Synonym for 'nogui' above");
             System.out.println("   ");
             System.out.println("   Other arguments are allowed and are passed on to the JJSPRuntime");
             System.out.println("   NOTE: if not already specified, an additional option 'mode = production' is automatically added");
