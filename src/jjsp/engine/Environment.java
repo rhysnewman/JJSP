@@ -104,7 +104,27 @@ public class Environment extends ImageGenerator
 
         serviceLoaders = new HashMap();
         registeredDataInfoIndices = new TreeMap();
-        libraryLoader = createLibraryLoader(); 
+        libraryLoader = createLibraryLoader();
+        clearSunJarFileFactoryCache();
+
+    }
+
+    private static void clearSunJarFileFactoryCache() {
+        try {
+            Class jarFileFactory = Class.forName("sun.net.www.protocol.jar.JarFileFactory");
+
+            Field fileCacheField = jarFileFactory.getDeclaredField("fileCache");
+            fileCacheField.setAccessible(true);
+            Map fileCache = (Map) fileCacheField.get(null);
+            fileCache.clear();
+
+            Field urlCacheField = jarFileFactory.getDeclaredField("urlCache");
+            urlCacheField.setAccessible(true);
+            Map urlCache = (Map) urlCacheField.get(null);
+            urlCache.clear();
+        } catch (IllegalAccessException | NoSuchFieldException | ClassNotFoundException e) {
+            // Unable to clear the cache, but we shouldn't have been messing with it anyway. Maybe we're on OpenJDK
+        }
     }
 
     public Map getArgs()
@@ -295,7 +315,7 @@ public class Environment extends ImageGenerator
                 jjspLoaderUrls.add(urls[i]);
         }
         catch (Exception e) {}
-        
+
         ArrayList ll = new ArrayList();
         URL[] rootJarURLs = getJarURLsFromDirectoryURI(getRootURI());
         for (int i=0; i<rootJarURLs.length; i++)
