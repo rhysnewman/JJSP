@@ -59,6 +59,8 @@ public class Engine implements Runnable
     {
         if (started)
             throw new IllegalStateException("Engine already started");
+        if (stop)
+            throw new IllegalStateException("Engine already stopped");
         started = true;
         new Thread(this).start();
     }
