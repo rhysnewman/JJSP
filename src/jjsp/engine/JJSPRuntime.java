@@ -290,6 +290,7 @@ public class JJSPRuntime extends Environment
                 log("warn", "Exception in registered shutdown hook "+e);
             }
         }
+        closeEnvironment();
     }
 
     public synchronized String printStackTrace(Throwable t)
