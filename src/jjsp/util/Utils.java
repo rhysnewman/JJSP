@@ -217,7 +217,13 @@ public class Utils
         JarInputStream jarStream = null;
         try
         {
-            jarStream = new JarInputStream(jarURI.toURL().openStream());
+            try {
+                jarStream = new JarInputStream(jarURI.toURL().openStream());
+            }
+            catch (FileNotFoundException e) {
+                return false;
+            }
+
             Manifest manifest = jarStream.getManifest();
             if (manifest != null) {
                 Attributes attrs = manifest.getMainAttributes();
