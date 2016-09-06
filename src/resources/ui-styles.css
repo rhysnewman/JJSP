@@ -1,0 +1,16 @@
+
+/* This is a nasty hack, but it works: set the tab's label text to have zero (ish) size,
+ * then set our replacement to be "normal" size.
+ * The correct way would be to have a new TabPaneSkin that supported dragging.
+ */
+
+.tab-pane .headers-region .tab .tab-label {
+    -fx-font-size: 0.1pt;
+}
+
+
+.tab-pane .headers-region .tab .tab-label .custom {
+    -fx-font-size: 10pt;
+}
+
+

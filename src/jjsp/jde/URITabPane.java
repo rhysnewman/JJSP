@@ -254,6 +254,7 @@ public class URITabPane extends TabPane
             mainMarker = new BorderPane();
             labelText = new Text();
             tabHeader = new CustomGraphic();
+            tabHeader.getStyleClass().add("custom");
             tabHeader.getChildren().addAll(iconBox, labelText, mainMarker);
             setGraphic(tabHeader);
             iconBox.setCenter(iconCache.createImageViewFor(jde.getURI()));
@@ -327,6 +328,7 @@ public class URITabPane extends TabPane
             if (!uri.equals(tabHeader.currentURI) || !fullTitle.equals(jdeComponent.getFullTitle()))
             {
                 labelText.setText(jdeComponent.getShortTitle());
+                setText(jdeComponent.getShortTitle());
                 fullTitle = jdeComponent.getFullTitle();
 
                 String s = uri.getScheme();
