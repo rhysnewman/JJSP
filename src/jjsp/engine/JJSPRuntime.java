@@ -1166,6 +1166,16 @@ public class JJSPRuntime extends Environment
         return JSONParser.getValue(json, path);
     }
 
+    public String toJSON(Object obj)
+    {
+        return toJSONString(obj);
+    }
+
+    public String toJSON(Object obj, boolean withNewlines)
+    {
+        return toJSONString(obj, withNewlines);
+    }
+
     public String toJSONString(Object obj)
     {
         return JSONParser.toString(obj);
