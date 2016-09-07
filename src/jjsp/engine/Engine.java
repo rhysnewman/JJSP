@@ -59,6 +59,8 @@ public class Engine implements Runnable
     {
         if (started)
             throw new IllegalStateException("Engine already started");
+        if (stop)
+            throw new IllegalStateException("Engine has been stopped");
         started = true;
         new Thread(this).start();
     }
@@ -81,6 +83,8 @@ public class Engine implements Runnable
     {
         synchronized (this)
         {
+            if (stop)
+                return;
             stop = true;
             notifyAll();
         }
@@ -242,6 +246,8 @@ public class Engine implements Runnable
 
             synchronized (this)
             {
+                if (stop)
+                    throw new IllegalStateException("Engine stopped before launch");
                 jjspRuntime = jr;
             }
 
