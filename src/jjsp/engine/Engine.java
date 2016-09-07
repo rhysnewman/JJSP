@@ -246,6 +246,8 @@ public class Engine implements Runnable
 
             synchronized (this)
             {
+                if (stop)
+                    throw new IllegalStateException("Engine stopped before launch");
                 jjspRuntime = jr;
             }
 
