@@ -574,6 +574,11 @@ public class JJSPRuntime extends Environment
         return loadServiceFromClassLoader(mainClassName, getLibraryLoader(), props);
     }
 
+    public Object loadLibraryService(String mainClassName, Map props) throws Exception
+    {
+        return loadServiceFromClassLoader(mainClassName, getLibraryLoader(), null, props);
+    }
+
     public Object loadService(String mainClassName, String serviceName) throws Exception
     {
         return loadService(mainClassName, serviceName, null);
@@ -584,6 +589,11 @@ public class JJSPRuntime extends Environment
         return loadServiceFromClassLoader(mainClassName, getServiceLoader(serviceName), props);
     }
 
+    public Object loadService(String mainClassName, String serviceName, Map props) throws Exception
+    {
+        return loadServiceFromClassLoader(mainClassName, getServiceLoader(serviceName), null, props);
+    }
+
     public Object loadServiceFromClassLoader(String mainClassName, ClassLoader cl) throws Exception
     {
         return loadServiceFromClassLoader(mainClassName, cl, null);
@@ -591,7 +601,14 @@ public class JJSPRuntime extends Environment
 
     public Object loadServiceFromClassLoader(String mainClassName, ClassLoader cl, ScriptObjectMirror props) throws Exception
     {
-        Map propMap = new HashMap();
+        return loadServiceFromClassLoader(mainClassName, cl, props, null);
+    }
+
+    public Object loadServiceFromClassLoader(String mainClassName, ClassLoader cl, ScriptObjectMirror props, Map propMap) throws Exception
+    {
+        if (propMap == null)
+            propMap = new HashMap();
+
         try
         {
             propMap.putAll(props);
