@@ -111,8 +111,10 @@ public class Environment extends ImageGenerator
 
     }
 
-    private static void clearSunJarFileFactoryCache() {
-        try {
+    private static void clearSunJarFileFactoryCache() 
+    {
+        try 
+        {
             Class jarFileFactory = Class.forName("sun.net.www.protocol.jar.JarFileFactory");
 
             Field fileCacheField = jarFileFactory.getDeclaredField("fileCache");
@@ -124,9 +126,9 @@ public class Environment extends ImageGenerator
             urlCacheField.setAccessible(true);
             Map urlCache = (Map) urlCacheField.get(null);
             urlCache.clear();
-        } catch (IllegalAccessException | NoSuchFieldException | ClassNotFoundException e) {
-            // Unable to clear the cache, but we shouldn't have been messing with it anyway. Maybe we're on OpenJDK
         }
+        catch (Exception e) { }
+        // Unable to clear the cache, but we shouldn't have been messing with it anyway. Maybe we're on OpenJDK
     }
 
     public Map getArgs()
@@ -487,26 +489,37 @@ public class Environment extends ImageGenerator
 
     public URIContent loadFromResourcePath(String path) throws IOException
     {
+        StringBuffer buf = new StringBuffer();
+        try
+        {
+            URI absoluteURI = new URI(path);
+            if (absoluteURI.isAbsolute())
+            {
+                byte[] data = Utils.load(absoluteURI);
+                return new URIContent(absoluteURI, data);
+            }
+        }
+        catch (Exception e) {buf.append(path+"; ");}
+                    
         Iterator itt = null;
         synchronized (this)
         {
             itt = resourcePathRoots.iterator();
         }
 
-        StringBuffer buf = new StringBuffer();
+        String escapedPath = escapeResourcePath(path);
         while (itt.hasNext())
         {
             URI uri = (URI) itt.next();
             try
             {
-                path = escapeResourcePath(path);
-                URI resolvedURI = uri.resolve(path);
+                URI resolvedURI = uri.resolve(escapedPath);
                 byte[] data = Utils.load(resolvedURI);
                 return new URIContent(resolvedURI, data);
             }
             catch (Exception e) {}
 
-            buf.append(uri.toString()+";");
+            buf.append(uri.toString()+"; ");
         }
 
         throw new IOException("Failed to find resource '"+path+"' in path '"+buf+"'");
