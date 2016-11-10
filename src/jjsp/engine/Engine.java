@@ -359,7 +359,7 @@ public class Engine implements Runnable
         {
             if (!isListening)
                 throw new IOException("FATAL: No port opened to listen on");
-            log(Level.INFO, "Servier Started");
+            log(Level.INFO, "Server Started");
         }
     }
     
