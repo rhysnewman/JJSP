@@ -424,18 +424,18 @@ public class ScriptParser
 
     private static String escapeJSString(String src)
     {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
 
         for (int i=0; i<src.length(); i++) 
         {
             char ch = src.charAt(i);
             
             if (ch > 0xfff)
-                buf.append("\\u" + hex(ch));
+                buf.append("\\u").append(hex(ch));
             else if (ch > 0xff) 
-                buf.append("\\u0" + hex(ch));
+                buf.append("\\u0").append(hex(ch));
             else if (ch > 0x7f) 
-                buf.append("\\u00" + hex(ch));
+                buf.append("\\u00").append(hex(ch));
             else 
             {
                 switch (ch) 
@@ -465,9 +465,9 @@ public class ScriptParser
                     if (ch < 32)
                     {
                         if (ch > 0xf)
-                            buf.append("\\u00" + hex(ch));
+                            buf.append("\\u00").append(hex(ch));
                         else
-                            buf.append("\\u000" + hex(ch));
+                            buf.append("\\u000").append(hex(ch));
                     }
                     else
                         buf.append(ch);
