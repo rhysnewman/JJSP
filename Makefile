@@ -13,9 +13,9 @@ compile:
 	mkdir -p build
 	chmod -R a+r+w build
 ifeq ($(sysname), $(cygwinname))
-	javac -cp ".;" -d build `find src/ -name \*.java`
+	javac -cp ".;" -parameters -d build `find src/ -name \*.java`
 else
-	javac -cp ".:" -d build `find src/ -name \*.java`
+	javac -cp ".:" -parameters -d build `find src/ -name \*.java`
 endif
 
 .PHONY: clean

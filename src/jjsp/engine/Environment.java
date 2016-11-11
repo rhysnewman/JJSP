@@ -47,9 +47,10 @@ public class Environment extends ImageGenerator
     private ArrayList resourcePathRoots;
     private File localCacheDir, servicesCacheDir;
 
-    private HashMap serviceLoaders;
+    private final HashMap serviceLoaders;
     private URLClassLoader libraryLoader;
     private TreeMap registeredDataInfoIndices;
+    private final Set ourClassLoaders;
 
     public Environment() throws IOException
     {
@@ -102,6 +103,7 @@ public class Environment extends ImageGenerator
         resourcePathRoots = new ArrayList();
         addResourcePathRoot(rootURI);
 
+        ourClassLoaders = new HashSet();
         serviceLoaders = new HashMap();
         registeredDataInfoIndices = new TreeMap();
         libraryLoader = createLibraryLoader();
@@ -332,7 +334,7 @@ public class Environment extends ImageGenerator
 
         URL[] clUrls = new URL[ll.size()];
         ll.toArray(clUrls);
-        return new URLClassLoader(clUrls, getClass().getClassLoader());
+        return recordClassLoader(new URLClassLoader(clUrls, getClass().getClassLoader()));
     }
 
     public URLClassLoader createLibraryLoader() throws IOException
@@ -397,7 +399,7 @@ public class Environment extends ImageGenerator
         URL[] fullList = new URL[ll.size()];
         ll.toArray(fullList);
         
-        return new URLClassLoader(fullList, getClass().getClassLoader());
+        return recordClassLoader(new URLClassLoader(fullList, getClass().getClassLoader()));
     }
 
     public URLClassLoader getServiceLoader(String serviceName) throws IOException
@@ -419,17 +421,19 @@ public class Environment extends ImageGenerator
         URI svcURI = getServiceURI(serviceName); 
         result = createClassLoaderFromDirURI(svcURI, getLibraryLoader());
 
+        URLClassLoader ll;
         synchronized (serviceLoaders)
         {
-            URLClassLoader ll = (URLClassLoader) serviceLoaders.get(serviceName);
+            ll = (URLClassLoader) serviceLoaders.get(serviceName);
             if (ll == null)
             {
                 serviceLoaders.put(serviceName, result);
-                ll = result;
+                return result;
             }
-                
-            return result;
         }
+        // We don't need result now, and it wasn't recorded as createClassLoaderFromDirURI is static, so close it.
+        result.close();
+        return ll;
     }
     
     public URLClassLoader createServiceLoader(String serviceName) throws IOException
@@ -438,7 +442,7 @@ public class Environment extends ImageGenerator
             throw new IOException("Service '"+serviceName+"' not found");
 
         URI svcURI = getServiceURI(serviceName); 
-        return createClassLoaderFromDirURI(svcURI, getLibraryLoader());
+        return recordClassLoader(createClassLoaderFromDirURI(svcURI, getLibraryLoader()));
     }
 
     public Class getServiceClass(String serviceName, String className) throws Exception
@@ -1013,7 +1017,10 @@ public class Environment extends ImageGenerator
         ll.toArray(urls);
         return urls;
     }
-        
+
+    /** Note - ClassLoaders loaded from this method (and other static methods) should be closed by the caller,
+     * as they do not have an Environment to manage their lifecycle.
+     */
     public static URLClassLoader createClassLoaderFromClassPath(URI srcURI, String classPath, ClassLoader parent) throws Exception
     {
         URL[] urls = createURLListFromClassPath(srcURI, classPath);
@@ -1038,12 +1045,15 @@ public class Environment extends ImageGenerator
         URL[] urls = new URL[ll.size()];
         ll.toArray(urls);
         return urls;
-    }  
+    }
 
+    /** Note - ClassLoaders loaded from this method (and other static methods) should be closed by the caller,
+     * as they do not have an Environment to manage their lifecycle.
+     */
     public static URLClassLoader createClassLoaderFromDirURI(URI dirURI, ClassLoader parent) throws IOException
     {
         return new URLClassLoader(getJarURLsFromDirectoryURI(dirURI), parent);
-    }  
+    }
 
     public long parseLong(String s)
     {
@@ -1269,6 +1279,22 @@ public class Environment extends ImageGenerator
         }
 
         return buf.toString();
+    }
+
+    private URLClassLoader recordClassLoader(URLClassLoader cl) {
+        synchronized (ourClassLoaders) {
+            ourClassLoaders.add(cl);
+        }
+        return cl;
+    }
+
+    void closeEnvironment() throws IOException {
+        synchronized (ourClassLoaders) {
+            for (Object ourClassLoaderObj : ourClassLoaders) {
+                URLClassLoader cl = (URLClassLoader) ourClassLoaderObj;
+                cl.close();
+            }
+        }
     }
 
     public static String toString(Throwable t)

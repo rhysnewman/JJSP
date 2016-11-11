@@ -1161,6 +1161,9 @@ public class JDE extends Application
             main.setTop(menuBar);
 
             Scene scene = new Scene(main, uiState.screenWidth, uiState.screenHeight, Color.WHITE);
+            final URL resource = getClass().getResource("/resources/ui-styles.css");
+            scene.getStylesheets().add(resource.toExternalForm());
+
             scene.addEventFilter(KeyEvent.KEY_RELEASED, (keyEvent) -> {if (keyEvent.getCode() == KeyCode.F6) {keyEvent.consume(); runMainTab(); }});
  
             primaryStage.setTitle("JJSP Browser");

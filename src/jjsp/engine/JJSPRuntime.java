@@ -22,12 +22,9 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.lang.reflect.*;
-import java.util.*;
 import java.util.logging.*;
 import java.util.function.*;
-import java.awt.image.*;
 
-import javax.imageio.*;
 import javax.script.*;
 
 import jdk.nashorn.api.scripting.*;
@@ -35,7 +32,6 @@ import jdk.nashorn.api.scripting.*;
 import jjsp.http.*;
 import jjsp.http.filters.*;
 import jjsp.util.*;
-import jjsp.data.*;
 
 public class JJSPRuntime extends Environment
 {
@@ -290,6 +286,7 @@ public class JJSPRuntime extends Environment
                 log("warn", "Exception in registered shutdown hook "+e);
             }
         }
+        closeEnvironment();
     }
 
     public synchronized String printStackTrace(Throwable t)
@@ -1241,16 +1238,12 @@ public class JJSPRuntime extends Environment
         return stopRequested;
     }
 
-    private static StringBuffer getArgList(int paramCount)
-    {
-        StringBuffer argList = new StringBuffer();
-        for (int j = 0; j < paramCount; j++)
-        {
-            if (j > 0)
-                argList.append(",");
-            argList.append("arg" + j);
+    public static String wrapClassWithFunctions(String targetClassName, String jsVariable) {
+        try {
+            return wrapFunctionScript(Class.forName(targetClassName), jsVariable);
+        } catch (ClassNotFoundException e) {
+            return "/* Class " + targetClassName + " not found */\n";
         }
-        return argList;
     }
 
     public static String wrapFunctionScript(Class target, String jsVariable)
@@ -1274,31 +1267,43 @@ public class JJSPRuntime extends Environment
         for (String name: grouped.keySet())
         {
             List<Method> methods = grouped.get(name);
-            if (methods.size() == 1)
-            {
-                int paramCount = methods.get(0).getParameterCount();
-                StringBuffer argList = getArgList(paramCount);
+            int maxParamCount = 0;
+            SortedSet<Integer> argCounts = new TreeSet<>();
 
-                result += name + " = function(" + argList + "){return " + jsVariable + "." + name + "(" + argList + ");};\n";
-            }
-            else
+            String[] argNames = new String[0];
+            for (Method m: methods)
             {
-                int maxParamCount = 0;
-                SortedSet<Integer> argCounts = new TreeSet<>();
-                for (Method m: methods)
-                {
-                    maxParamCount = Math.max(maxParamCount, m.getParameterCount());
-                    argCounts.add(m.getParameterCount());
+                final int parameterCount = m.getParameterCount();
+
+                maxParamCount = Math.max(maxParamCount, parameterCount);
+                if (parameterCount == maxParamCount) {
+                    argNames = getParameterNames(m);
+                }
+                argCounts.add(parameterCount);
+            }
+
+            result += "function " + name + "(" + String.join(",", Arrays.asList(argNames)) + "){\n";
+            for (int args : argCounts) {
+                if (args < maxParamCount) {
+                    result += "  if (typeof " + (argNames[args]) + " == 'undefined')\n  ";
                 }
 
-                result += name + " = function(" + getArgList(maxParamCount) + "){";
-                for (int args : argCounts)
-                    result += "if (typeof arg"+(args)+" == 'undefined')\n    return "+ jsVariable + "." + name + "(" + getArgList(args) + ");\n";
-                result += "};\n";
+                result += "  return " + jsVariable + "." + name + "(" + String.join(",", Arrays.asList(argNames).subList(0, args)) + ");\n";
             }
+            result += "}\n";
         }
 
         return result;
+    }
+
+    private static String[] getParameterNames(Method m) {
+        String[] argNames;
+        Parameter[] parameters = m.getParameters();
+        argNames = new String[parameters.length];
+        for (int i = 0; i < parameters.length; i++) {
+            argNames[i] = parameters[i].getName();
+        }
+        return argNames;
     }
 
     public static String toString(Throwable err)
