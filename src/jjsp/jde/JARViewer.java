@@ -352,6 +352,43 @@ public class JARViewer extends JDEComponent
             return "<span style='color:#CC6600'>"+desc+"</span>";
         }
 
+        private String getJavaClassDocURL(Class cls)
+        {
+            if (cls.isArray())
+                cls = cls.getComponentType();
+            if (cls.isAnonymousClass() || cls.isPrimitive() || cls.isSynthetic())
+                return "http://docs.oracle.com/javase/8/docs/api/overview-summary.html";
+
+            String name = cls.getCanonicalName();
+            if (name == null) 
+                return null;
+
+            String classURL = classURL = name.replace(".", "/")+".html";
+            if (name.startsWith("java"))
+                classURL = "http://docs.oracle.com/javase/8/docs/api/"+classURL;
+            else if (name.startsWith("javafx"))
+                classURL = "http://docs.oracle.com/javase/8/javafx/api/"+classURL;
+            else
+                return null;
+            
+            return classURL;
+        }
+
+        private String getDocumentationClassLink(Class cls)
+        {
+            String classURL = cls.getName().replace(".", "/")+".class";
+            if (jarIndex.get(classURL) != null)
+                return "/"+classURL;
+            else
+            {
+                String docRefURL = getJavaClassDocURL(cls);
+                if (docRefURL != null)
+                    return docRefURL;
+                else
+                    return "http://www.google.com/search?q=github%3A%20"+URLEncoder.encode(classURL.replace(".", " "));
+            }
+        }
+
         private void appendExecutableDetails(Executable ex, PrintStream ps) throws Exception
         {
             int mods = ex.getModifiers();
@@ -363,11 +400,7 @@ public class JARViewer extends JDEComponent
             if (ex instanceof Method)
             {
                 Class retType = ((Method) ex).getReturnType();
-                String classURL = retType.getName().replace(".", "/")+".class";
-                if (jarIndex.get(classURL) != null)
-                    nameDesc += "<span style='color:magenta'><a href='/"+classURL+"'>"+retType.getCanonicalName()+"</a></span> ";
-                else
-                    nameDesc += "<span style='color:magenta'>"+retType.getCanonicalName()+"</span> ";
+                nameDesc += "<a href='"+getDocumentationClassLink(retType)+"' style='color:magenta; text-decoration: none'>"+retType.getCanonicalName()+"</a> ";
                 spaceLen += retType.getCanonicalName().length();
             }
             
@@ -379,19 +412,14 @@ public class JARViewer extends JDEComponent
             for (int i=0; i<spaceLen; i++)
                 space.append(" ");
 
-            Class[] params = ex.getParameterTypes();
+            Parameter[] params = ex.getParameters();
             if (params.length == 0)
                 ps.print(")  ");
             else
             {
                 for (int i=0; i<params.length; i++)
                 {
-                    String classURL = params[i].getName().replace(".", "/")+".class";
-                    if (jarIndex.get(classURL) != null)
-                        ps.print("<span style='color:magenta'><a href='/"+classURL+"'>"+params[i].getCanonicalName()+"</a></span> arg"+i);
-                    else
-                        ps.print("<span style='color:magenta'>"+params[i].getCanonicalName()+"</span> arg"+i);
-                        
+                    ps.print("<a href='"+getDocumentationClassLink(params[i].getType())+"' style='color:magenta; text-decoration: none'>"+params[i].getType().getCanonicalName()+"</a> "+params[i].getName()); 
                     if (i == params.length-1)
                         ps.print(")  ");
                     else
@@ -399,14 +427,14 @@ public class JARViewer extends JDEComponent
                 }
             }
 
-            Class[] execeptions = ex.getExceptionTypes();
-            if (execeptions.length > 0)
+            Class[] exceptions = ex.getExceptionTypes();
+            if (exceptions.length > 0)
             {
                 ps.print("throws ");
-                for (int i=0; i<execeptions.length; i++)
+                for (int i=0; i<exceptions.length; i++)
                 {
-                    ps.print("<span style='color:red'>"+execeptions[i].getCanonicalName()+"</span>");
-                    if (i < execeptions.length-1)
+                    ps.print("<a href='"+getDocumentationClassLink(exceptions[i])+"' style='color:red; text-decoration: none'>"+exceptions[i].getCanonicalName()+"</a>");
+                    if (i < exceptions.length-1)
                         ps.print(", ");
                 }
             }
@@ -442,12 +470,8 @@ public class JARViewer extends JDEComponent
                     continue;
 
                 Class type = ff[i].getType();
-                String classURL = type.getName().replace(".", "/")+".class";
-                if (jarIndex.get(classURL) != null)
-                    ps.print("    "+modifiers(mods)+" <span style='color:magenta'><a href='/"+classURL+"'>"+type.getCanonicalName()+"</a></span> "+ff[i].getName());
-                else
-                    ps.print("    "+modifiers(mods)+" <span style='color:magenta'>"+type.getCanonicalName()+"</span> "+ff[i].getName());
-                
+                ps.print("    "+modifiers(mods)+" <a href='"+getDocumentationClassLink(type)+"' style='color:magenta; text-decoration: none'>"+type.getCanonicalName()+"</a> "+ff[i].getName()); 
+
                 try
                 {
                     Object val = ff[i].get(null);
@@ -501,13 +525,7 @@ public class JARViewer extends JDEComponent
 
                     Class superClass = cls.getSuperclass();
                     if (superClass != null)
-                    {
-                        String superClassURL = superClass.getName().replace(".", "/")+".class";
-                        if (jarIndex.get(superClassURL) != null)
-                            ps.println("<h2>Extends <span style='color:magenta'><a href='/"+superClassURL+"'>"+superClass.getCanonicalName()+"</a></span></h2>");
-                        else
-                            ps.println("<h2>Extends <span style='color:magenta'>"+superClass.getCanonicalName()+"</span></h2>");
-                    }
+                        ps.println("<h2>Extends <a href='"+getDocumentationClassLink(superClass)+"' style='color:magenta; text-decoration: none'>"+superClass.getCanonicalName()+"</a></h2>");
 
                     generateClassDetails(cls, ps);
                 }
