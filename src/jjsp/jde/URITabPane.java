@@ -258,6 +258,7 @@ public class URITabPane extends TabPane
             tabHeader.getChildren().addAll(iconBox, labelText, mainMarker);
             setGraphic(tabHeader);
             iconBox.setCenter(iconCache.createImageViewFor(jde.getURI()));
+            getStyleClass().add("URITab");
 
             setContextMenu(new TabContextMenu());
             setOnClosed((evt) -> tabRemoved(this, jdeComponent));

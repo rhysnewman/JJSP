@@ -4,7 +4,7 @@
  * The correct way would be to have a new TabPaneSkin that supported dragging.
  */
 
-.tab-pane .headers-region .tab .tab-label {
+.tab-pane .headers-region .URITab .tab-label {
     -fx-font-size: 0.1pt;
 }
 
