@@ -48,7 +48,7 @@ public class CachedDataIndex implements DataInfoIndex
     {
         if (key == null)
             key = "";
-        lastRefreshes.put(key, new Long(System.currentTimeMillis()));
+        lastRefreshes.put(key, System.currentTimeMillis());
     }
 
     private synchronized boolean checkStaleReadOK(String key, Exception srcConnectionException) throws IOException
@@ -57,7 +57,7 @@ public class CachedDataIndex implements DataInfoIndex
             key = "";
 
         Long time = (Long) lastRefreshes.get(key);
-        if ((time != null) && (System.currentTimeMillis() - time.longValue() < staleReadTimeLimit))
+        if ((time != null) && (System.currentTimeMillis() - time < staleReadTimeLimit))
             return true;
 
         if (srcConnectionException != null)
