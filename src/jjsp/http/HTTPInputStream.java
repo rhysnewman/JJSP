@@ -598,6 +598,8 @@ public class HTTPInputStream extends InputStream
             else
             {
                 String data = Utils.toString(rawContent);
+		if ( (type != null) && type.contains("application/x-www-form-urlencoded") )
+                    data = URLDecoder.decode(data, "UTF-8");
                 for(String param: data.split("&"))
                 {
                     int equalPos = param.indexOf('=');
