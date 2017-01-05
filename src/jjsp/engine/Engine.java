@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.engine;
@@ -42,7 +42,7 @@ public class Engine implements Runnable
 
     private HTTPServer server;
     private JJSPRuntime jjspRuntime;
-    private boolean started, stop;
+    private boolean started, stop, running;
 
     public Engine(String jsSrc, URI sourceURI, URI rootURI, File localCacheDir, Map args)
     {
@@ -51,8 +51,8 @@ public class Engine implements Runnable
         this.sourceURI = sourceURI;
         this.localCacheDir = localCacheDir;
         this.args = args;
-        
-        started = stop = false;
+
+        started = stop = running = false;
     }
 
     public synchronized void start()
@@ -64,10 +64,14 @@ public class Engine implements Runnable
         started = true;
         new Thread(this).start();
     }
-    
+
     public synchronized boolean started()
     {
         return started;
+    }
+
+    public synchronized boolean isRunning() {
+        return running;
     }
 
     public boolean stopRequested()
@@ -109,6 +113,8 @@ public class Engine implements Runnable
         try
         {
             engineStopped();
+            started = false;
+            running = false;
         }
         catch (Throwable t)
         {
@@ -148,7 +154,7 @@ public class Engine implements Runnable
     {
         println("");
     }
-        
+
     public void println(Object obj)
     {
         JJSPRuntime jr = getRuntime();
@@ -201,9 +207,9 @@ public class Engine implements Runnable
         return server;
     }
 
-    protected ServerSocketInfo getDefaultServerSocket(JJSPRuntime runtime) throws Exception 
+    protected ServerSocketInfo getDefaultServerSocket(JJSPRuntime runtime) throws Exception
     {
-        int port = Utils.getFreeSocket(null, JJSPRuntime.DEFAULT_PORT_BASE, JJSPRuntime.DEFAULT_PORT_BASE+128); 
+        int port = Utils.getFreeSocket(null, JJSPRuntime.DEFAULT_PORT_BASE, JJSPRuntime.DEFAULT_PORT_BASE+128);
         if (port < 0)
             throw new IOException("No free port available for service (checked "+JJSPRuntime.DEFAULT_PORT_BASE+"..."+(JJSPRuntime.DEFAULT_PORT_BASE+128)+")");
         return new ServerSocketInfo(port, false, null);
@@ -211,15 +217,17 @@ public class Engine implements Runnable
 
     protected void serverListening(HTTPServer server, ServerSocketInfo socketInfo, Exception listenError) throws Exception {}
 
-    protected void launchComplete(HTTPServer server, JJSPRuntime runtime, boolean isListening) throws Exception 
+    protected void launchComplete(HTTPServer server, JJSPRuntime runtime, boolean isListening) throws Exception
     {
         if (isListening)
             getRuntime().println("Engine Running (Listening) "+new Date());
     }
 
-    protected void runtimeError(Throwable t) {}
+    protected void runtimeError(Throwable t) {
+        printStackTrace(t);
+    }
 
-    protected void engineStopped() 
+    protected void engineStopped()
     {
         JJSPRuntime rt = getRuntime();
         if (rt == null)
@@ -227,14 +235,14 @@ public class Engine implements Runnable
         rt.println("Engine Runtime Stopped at "+new Date());
     }
 
-    public String getLatestConsoleOutput() 
+    public String getLatestConsoleOutput()
     {
         JJSPRuntime rt = getRuntime();
         if (rt == null)
             return "";
         return rt.getAndClearJJSPOutput();
     }
-    
+
     public void run()
     {
         boolean launchOK = false;
@@ -267,7 +275,7 @@ public class Engine implements Runnable
             {
                 Exception listenError = null;
                 ServerSocketInfo info = ssInfo[p];
-                    
+
                 for (int i=0; i<5; i++)
                 {
                     listenError = null;
@@ -277,7 +285,7 @@ public class Engine implements Runnable
                         isListening = true;
                         break;
                     }
-                    catch (Exception e) 
+                    catch (Exception e)
                     {
                         listenError = e;
                     }
@@ -288,10 +296,10 @@ public class Engine implements Runnable
                     }
                     catch (Exception e) {}
                 }
-                    
+
                 serverListening(server, info, listenError);
             }
-            
+
             launchComplete(server, jjspRuntime, isListening);
             if (!isListening)
                 stop();
@@ -305,6 +313,8 @@ public class Engine implements Runnable
         {
             if (!launchOK)
                 stop();
+            else
+                running = true;
         }
     }
 
@@ -312,7 +322,7 @@ public class Engine implements Runnable
     {
         private long lastTimePrintout;
 
-        DefaultEngine(String jsSrc, File srcFile, File rootDir, File cacheDir, Map args) 
+        DefaultEngine(String jsSrc, File srcFile, File rootDir, File cacheDir, Map args)
         {
             super(jsSrc, srcFile.toURI(), rootDir.toURI(), cacheDir, args);
         }
@@ -335,7 +345,7 @@ public class Engine implements Runnable
             log(Level.SEVERE, "JJSP Server Runtime Error");
             printStackTrace(t);
         }
-        
+
         protected HTTPServerLogger getHTTPLog(JJSPRuntime runtime) throws Exception
         {
             HTTPServerLogger logger = runtime.getHTTPLogger();
@@ -344,7 +354,7 @@ public class Engine implements Runnable
             return new PrintStreamLogger();
         }
 
-        protected void serverListening(HTTPServer server, ServerSocketInfo socketInfo, Exception listenError) throws Exception 
+        protected void serverListening(HTTPServer server, ServerSocketInfo socketInfo, Exception listenError) throws Exception
         {
             if (listenError != null)
             {
@@ -355,14 +365,14 @@ public class Engine implements Runnable
                 log(Level.INFO, "Server listening on "+socketInfo);
         }
 
-        protected void launchComplete(HTTPServer server, JJSPRuntime runtime, boolean isListening) throws Exception 
+        protected void launchComplete(HTTPServer server, JJSPRuntime runtime, boolean isListening) throws Exception
         {
             if (!isListening)
                 throw new IOException("FATAL: No port opened to listen on");
             log(Level.INFO, "Server Started");
         }
     }
-    
+
     public static void main(String[] argList) throws Exception
     {
         Map args = Args.parse(argList);
@@ -386,7 +396,7 @@ public class Engine implements Runnable
                 throw new NullPointerException("No JJSP Source file specified; use -src option");
             return;
         }
-    
+
         String cwd = System.getProperty("user.dir");
         String rootDirName = Args.getArg("root", cwd);
         String cacheDirName = Args.getArg("cache", new File(cwd, Environment.CACHE_DIR).getAbsolutePath());
@@ -402,12 +412,12 @@ public class Engine implements Runnable
         args.remove("logDir");
         if (args.get("mode") == null)
             args.put("mode", "production");
-        
+
         //System.out.println(jjspArgs);
         File srcFile = new File(fileName);
         if (!srcFile.exists() || !srcFile.isFile())
             throw new IllegalStateException("Source file '"+srcFile+"' not found");
-        
+
         File rootDir = new File(rootDirName);
         if (!rootDir.exists() || !rootDir.isDirectory())
             throw new IllegalStateException("Root directory '"+rootDir+"' not found");
@@ -421,7 +431,7 @@ public class Engine implements Runnable
 
         Engine engine = new DefaultEngine(jsSrc, srcFile, rootDir, cacheDir, args);
         engine.start();
-        
+
         while (true)
         {
             String output = engine.getLatestConsoleOutput();
