@@ -1,23 +1,23 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.http;
 
-import java.io.*; 
+import java.io.*;
 import java.net.*;
 import java.util.*;
 
@@ -27,7 +27,7 @@ public class HTTPInputStream extends InputStream
 {
     private static final int DEFAULT_MAX_TO_READ_ON_CLOSE = 4*1024;
     private static final int DEFAULT_MAX_POST_DATA_SIZE = 256*1024;
-    
+
     private boolean isSecure;
     private int serverPort;
     private HTTPRequestHeaders headers;
@@ -43,7 +43,7 @@ public class HTTPInputStream extends InputStream
         this.clientAddress = address;
 
         headers = new HTTPRequestHeaders();
-        contentStream = null; 
+        contentStream = null;
     }
 
     public int getServerPort()
@@ -94,7 +94,7 @@ public class HTTPInputStream extends InputStream
             measureTimeOfNextRead = false;
             readTime = totalBytesRead = 0;
         }
-        
+
         public int available() throws IOException
         {
             return src.available();
@@ -115,7 +115,7 @@ public class HTTPInputStream extends InputStream
 
             totalBytesRead += number;
         }
-	
+
         public int read() throws IOException
         {
             int result = src.read();
@@ -162,7 +162,7 @@ public class HTTPInputStream extends InputStream
             contentStream = new UnchunkedContentStream(len);
         else if (headers.getHeader("Content-Type", "").equals("chunked"))
             contentStream = new ChunkedContentStream();
-        
+
         return true;
     }
 
@@ -188,7 +188,7 @@ public class HTTPInputStream extends InputStream
         if (contentStream == null)
             return 0;
         return contentStream.available();
-    } 
+    }
 
     public int read() throws IOException
     {
@@ -241,7 +241,7 @@ public class HTTPInputStream extends InputStream
     {
         return Utils.toString(readRawContent(maxLength));
     }
-    
+
     public byte[] readRawContent() throws IOException
     {
         return readRawContent(DEFAULT_MAX_POST_DATA_SIZE);
@@ -254,7 +254,7 @@ public class HTTPInputStream extends InputStream
 
         try
         {
-            if (contentStream instanceof UnchunkedContentStream) 
+            if (contentStream instanceof UnchunkedContentStream)
             {
                 int len = (int)((UnchunkedContentStream)contentStream).length;
                 if (len >= maxLength)
@@ -262,7 +262,7 @@ public class HTTPInputStream extends InputStream
 
                 byte[] raw = new byte[len];
                 int index = 0;
-                while (index < raw.length) 
+                while (index < raw.length)
                 {
                     int read = contentStream.read(raw, index, raw.length - index);
                     if (read >= 0)
@@ -270,9 +270,9 @@ public class HTTPInputStream extends InputStream
                     else
                         break;
                 }
-                return raw;            
-            } 
-            else 
+                return raw;
+            }
+            else
             {
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
                 byte[] buf = new byte[4096];
@@ -295,7 +295,7 @@ public class HTTPInputStream extends InputStream
             catch (Exception e) {}
         }
     }
-     
+
     class ChunkedContentStream extends InputStream
     {
         private boolean eof;
@@ -386,7 +386,7 @@ public class HTTPInputStream extends InputStream
             {
                 if (read >= toRead)
                     return read;
-                
+
                 if (eof || ((chunkPos >= chunkLength) && !findNextChunk()))
                 {
                     if (read > 0)
@@ -405,12 +405,12 @@ public class HTTPInputStream extends InputStream
                 chunkPos += r;
             }
         }
-        
+
         public long skip(long s) throws IOException
         {
             if (eof || ((chunkPos >= chunkLength) && !findNextChunk()))
                 return -1;
-                
+
             long toSkip = Math.min(s, chunkLength - chunkPos);
             if (toSkip <= 0)
                 return 0;
@@ -418,13 +418,13 @@ public class HTTPInputStream extends InputStream
             if (skipped > 0)
                 chunkPos += (int) skipped;
             return skipped;
-        } 
+        }
 
         public void close() throws IOException
         {
             if (eof)
                 return;
-            
+
             long remain = DEFAULT_MAX_TO_READ_ON_CLOSE;
             for (int i=0; (remain>0) && (i<32); i++)
             {
@@ -446,7 +446,7 @@ public class HTTPInputStream extends InputStream
     {
         private long length, pos;
         private boolean closed;
-        
+
         public UnchunkedContentStream(long length)
         {
             pos = 0;
@@ -468,7 +468,7 @@ public class HTTPInputStream extends InputStream
             if (closed)
                 return -1;
 
-            if (length >= 0) 
+            if (length >= 0)
             {
                 if (pos >= length)
                 {
@@ -496,7 +496,7 @@ public class HTTPInputStream extends InputStream
                 return -1;
 
             int toRead = Math.min(b.length - off, len);
-            if (length >= 0) 
+            if (length >= 0)
             {
                 if (pos >= length)
                 {
@@ -513,7 +513,7 @@ public class HTTPInputStream extends InputStream
                 close();
             return read;
         }
-        
+
         public long skip(long s) throws IOException
         {
             if (closed)
@@ -527,7 +527,7 @@ public class HTTPInputStream extends InputStream
             if ((length > 0) && (pos >= length))
                 close();
             return s;
-        } 
+        }
 
         public void close() throws IOException
         {
@@ -549,7 +549,7 @@ public class HTTPInputStream extends InputStream
                 pos += s;
                 remain -= s;
             }
-                   
+
             closed = true;
             if (pos < length)
             {
@@ -559,7 +559,7 @@ public class HTTPInputStream extends InputStream
         }
     }
 
-    public Map getPostParameters() throws IOException 
+    public Map getPostParameters() throws IOException
     {
         return getPostParameters(1024*1024);
     }
@@ -573,23 +573,23 @@ public class HTTPInputStream extends InputStream
      * @return a map with paramName -&gt; paramValue
      * @throws IOException
      */
-    public Map getPostParameters(int maxPostLength) throws IOException 
+    public Map getPostParameters(int maxPostLength) throws IOException
     {
         HTTPRequestHeaders headers = getHeaders();
         String type = headers.getHeader("Content-Type", null);
 
-        if(headers.isPost()) 
+        if(headers.isPost())
         {
             //load raw post data
             Map output = new HashMap();
             byte[] rawContent = readRawContent(maxPostLength);
 
             //multipart post
-            if ((type != null) && type.contains("multipart/form-data")) 
+            if ((type != null) && type.contains("multipart/form-data"))
             {
                 HTMLFormPart[] parts = HTMLFormPart.processPostedFormData(headers, rawContent);
 
-                if (parts != null) 
+                if (parts != null)
                 {
                     for (int i = 0; i < parts.length; i++)
                         output.put(parts[i].getAttribute("name"), new String(parts[i].getData(), "UTF-8"));
@@ -598,7 +598,7 @@ public class HTTPInputStream extends InputStream
             else
             {
                 String data = Utils.toString(rawContent);
-		if ( (type != null) && type.contains("application/x-www-form-urlencoded") )
+                if ( (type != null) && type.contains("application/x-www-form-urlencoded") )
                     data = URLDecoder.decode(data, "UTF-8");
                 for(String param: data.split("&"))
                 {
