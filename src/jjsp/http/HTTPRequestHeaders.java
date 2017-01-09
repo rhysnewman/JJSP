@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.http;
@@ -29,7 +29,7 @@ import jjsp.util.*;
 public class HTTPRequestHeaders extends HTTPHeaders
 {
     public static final int DEFAULT_HEADER_LINE_LENGTH = 4*1024;
-    
+
     private int pos;
     private String reqURL;
     private byte[] lineBuffer;
@@ -91,13 +91,13 @@ public class HTTPRequestHeaders extends HTTPHeaders
             {
                 if (lineBuffer[i] != (byte)':')
                     continue;
-                
+
                 String key = new String(lineBuffer, 0, i, HTTPUtils.ASCII);
-                
+
                 int val = i+1;
                 while (lineBuffer[val] == (byte)' ')
                     val++;
-                
+
                 String value = new String(lineBuffer, val, pos-val-2, HTTPUtils.ASCII);
                 if (getHeaderCount() >= MAX_HEADERS)
                     return false;
@@ -107,7 +107,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
             }
         }
     }
-    
+
     public boolean readHeadersFromStream(InputStream src) throws IOException
     {
         return readHeadersFromStream(src, null);
@@ -117,7 +117,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
     {
         clear();
         if (!readLine(src))
-            return false;// Header value too long, or too many headers 
+            return false;// Header value too long, or too many headers
 
         mainLine = getLineAsString();
         if (!readNextHeaderValuesFromStream(src))
@@ -129,13 +129,13 @@ public class HTTPRequestHeaders extends HTTPHeaders
                 clientIPAddress = clientSocketAddress.getAddress().getHostAddress();
         }
         catch (Exception e) {}
-        
+
         try
         {
             String forwardHeader = getHeader("X-Forwarded-For");
             if (forwardHeader == null)
                 forwardHeader = getHeader("Forwarded");
-            
+
             if (forwardHeader != null)
             {
                 int comma = forwardHeader.indexOf(",");
@@ -153,6 +153,17 @@ public class HTTPRequestHeaders extends HTTPHeaders
         catch (Exception e) {}
 
         return true;
+    }
+
+    public String getRawURL() {
+        int space = mainLine.indexOf(" ");
+        if (space < 0)
+            return null;
+        int end = mainLine.lastIndexOf(" ");
+        if (end < 0)
+            return null;
+
+        return mainLine.substring(space+1, end).trim();
     }
 
     public String getRequestURL()
@@ -276,19 +287,19 @@ public class HTTPRequestHeaders extends HTTPHeaders
     {
         return Double.parseDouble(getQuery(key));
     }
-    
+
     public boolean getQueryBoolean(String key)
     {
         return Boolean.parseBoolean(getQuery(key));
     }
-    
+
     public Date getQueryDate(String key, DateFormat df)
     {
         try
         {
             return df.parse(getQuery(key));
         }
-        catch (ParseException e) 
+        catch (ParseException e)
         {
             throw new IllegalStateException("Invalid date string for key '"+key+"'");
         }
@@ -307,7 +318,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
         String value = getQuery(key, null);
         if (value == null)
             return defaultValue;
-        
+
         return Boolean.parseBoolean(value);
     }
 
@@ -316,7 +327,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
         String value = getQuery(key, null);
         if (value == null)
             return defaultValue;
-        
+
         return Integer.parseInt(value);
     }
 
@@ -325,7 +336,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
         String value = getQuery(key, null);
         if (value == null)
             return defaultValue;
-        
+
         return Long.parseLong(value);
     }
 
@@ -334,7 +345,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
         String value = getQuery(key, null);
         if (value == null)
             return defaultValue;
-        
+
         return Double.parseDouble(value);
     }
 
@@ -386,7 +397,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
 
         return result;
     }
-    
+
     public boolean isHTTP11()
     {
         return mainLine.endsWith(" HTTP/1.1");
@@ -398,16 +409,16 @@ public class HTTPRequestHeaders extends HTTPHeaders
         if (hostHeader != null)
             return hostHeader;
         String absoluteURL = getRequestURL();
-        
+
         if (absoluteURL.startsWith("http://"))
             absoluteURL = absoluteURL.substring(7);
         if (absoluteURL.startsWith("https://"))
             absoluteURL = absoluteURL.substring(8);
-        
+
         int s = absoluteURL.indexOf("/");
         if (s < 0)
             return null;
-        
+
         String result = absoluteURL.substring(0, s);
         int c = result.indexOf(":");
         if (c > 0)
@@ -448,7 +459,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
         int sp = mainLine.indexOf(" ");
         if (sp < 0)
             return null;
-        
+
         return mainLine.substring(0, sp);
     }
 
@@ -466,7 +477,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
     {
         return getHeader("Range", null) != null;
     }
-    
+
     public String getUserAgent()
     {
         return getHeader("User-Agent", "");
@@ -480,12 +491,12 @@ public class HTTPRequestHeaders extends HTTPHeaders
                 return "";
             return new String(lineBuffer, 0, len-2, HTTPUtils.ASCII);
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             return new String(lineBuffer, 0, len-2);//Should be impossible
         }
     }
-    
+
     public static int readLine(InputStream src, byte[] lineBuffer) throws IOException
     {
         int pos = 0;
@@ -497,7 +508,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
                 throw new EOFException("Unexpected EOF while seeking EOL");
             if (pos >= lineBuffer.length)
                 return -1; // "413 Entity Too Large" (when in HTTP header line);
-            
+
             lineBuffer[pos++] = (byte) b;
             eol = (eol << 8) | b;
             if ((0xFFFF & eol) == 0x0D0A)
@@ -531,22 +542,22 @@ public class HTTPRequestHeaders extends HTTPHeaders
             cookiesParsed = true;
             parseCookies(getHeader("Cookie"), cookieMap);
         }
-        
+
         return (String) cookieMap.get(key);
     }
 
-    public static Map parseCookies(String cookieString) 
+    public static Map parseCookies(String cookieString)
     {
         return parseCookies(cookieString, null);
     }
 
-    public static Map parseCookies(String cookieString, Map result) 
+    public static Map parseCookies(String cookieString, Map result)
     {
         if (result == null)
             result = new LinkedHashMap();
         if (cookieString == null)
             return result;
-        
+
         String[] parts = cookieString.split(";");
         for (int i=0; i<parts.length; i++)
         {
