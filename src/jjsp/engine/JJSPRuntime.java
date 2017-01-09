@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 
@@ -1158,11 +1158,16 @@ public class JJSPRuntime extends Environment
         return httpLogger;
     }
 
+    public synchronized HTTPServerLogger setHTTPLogDirectory(String logDirName, boolean autoFlush) throws IOException
+    {
+        return setHTTPLogDirectory(new File(logDirName), autoFlush);
+    }
+
     public synchronized HTTPServerLogger setHTTPLogDirectory(File logDir, boolean autoFlush) throws IOException
     {
         if (initialised())
             throw new IllegalStateException("Cannot set HTTP Log Directory after JJSP has started");
-        this.httpLogger = new DirectoryFileLogger(10, DirectoryFileLogger.DAILY, logDir);
+        this.httpLogger = new DirectoryFileLogger(10, DirectoryFileLogger.DAILY, logDir, autoFlush);
         return httpLogger;
     }
 
@@ -1198,12 +1203,12 @@ public class JJSPRuntime extends Environment
     {
         return JSONParser.toString(obj, withNewlines);
     }
-    
+
     public String prettyPrint(Object obj)
     {
         return JSONParser.prettyPrint(obj);
     }
-    
+
     public String prettyPrintJSON(Object obj)
     {
         return JSONParser.prettyPrint(obj);
