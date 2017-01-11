@@ -133,10 +133,10 @@ public class HTTPRequestHeaders extends HTTPHeaders
         try
         {
             String forwardHeader = getHeader("X-Forwarded-For");
-            if (forwardHeader == null)
+            if ( ( forwardHeader == null ) || forwardHeader.isEmpty() )
                 forwardHeader = getHeader("Forwarded");
 
-            if (forwardHeader != null)
+            if (forwardHeader != null && forwardHeader.length() > 4)
             {
                 int comma = forwardHeader.indexOf(",");
                 if (comma < 0)
