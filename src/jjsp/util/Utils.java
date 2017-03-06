@@ -28,7 +28,7 @@ import java.util.jar.*;
 
 public class Utils
 {
-    public static final String DEFAULT_VERSION_STRING = "5.04";
+    public static final String DEFAULT_VERSION_STRING = "5.12";
     public static final Charset ASCII = Charset.forName("US-ASCII");
 
     public static String toAsciiString(byte[] rawText)

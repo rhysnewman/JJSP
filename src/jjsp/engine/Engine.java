@@ -70,8 +70,14 @@ public class Engine implements Runnable
         return started;
     }
 
-    public synchronized boolean isRunning() {
+    public synchronized boolean isRunning() 
+    {
         return running;
+    }
+
+    public synchronized boolean stopped()
+    {
+        return stop;
     }
 
     public boolean stopRequested()
@@ -113,18 +119,19 @@ public class Engine implements Runnable
         try
         {
             engineStopped();
-            started = false;
-            running = false;
         }
         catch (Throwable t)
         {
             runtimeError(t);
         }
-    }
-
-    public synchronized boolean stopped()
-    {
-        return stop;
+        finally
+        {
+            synchronized (this)
+            {
+                started = false;
+                running = false;
+            }
+        }
     }
 
     public URI getSourceURI()
@@ -223,7 +230,8 @@ public class Engine implements Runnable
             getRuntime().println("Engine Running (Listening) "+new Date());
     }
 
-    protected void runtimeError(Throwable t) {
+    protected void runtimeError(Throwable t) 
+    {
         printStackTrace(t);
     }
 
@@ -289,6 +297,10 @@ public class Engine implements Runnable
                     {
                         listenError = e;
                     }
+                    catch (Throwable t)
+                    {
+                        listenError = new IOException("Error Listening on "+info, t);
+                    }
 
                     try
                     {
@@ -303,7 +315,8 @@ public class Engine implements Runnable
             launchComplete(server, jjspRuntime, isListening);
             if (!isListening)
                 stop();
-            launchOK = true;
+            else
+                launchOK = true;
         }
         catch (Throwable t)
         {
@@ -357,10 +370,7 @@ public class Engine implements Runnable
         protected void serverListening(HTTPServer server, ServerSocketInfo socketInfo, Exception listenError) throws Exception
         {
             if (listenError != null)
-            {
                 log(Level.SEVERE, "Error listening on "+socketInfo);
-                throw listenError;
-            }
             else
                 log(Level.INFO, "Server listening on "+socketInfo);
         }
@@ -368,7 +378,7 @@ public class Engine implements Runnable
         protected void launchComplete(HTTPServer server, JJSPRuntime runtime, boolean isListening) throws Exception
         {
             if (!isListening)
-                throw new IOException("FATAL: No port opened to listen on");
+                throw new IOException("FATAL: No port opened to listen on - Server not started");
             log(Level.INFO, "Server Started");
         }
     }
