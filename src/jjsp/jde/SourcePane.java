@@ -180,6 +180,11 @@ public class SourcePane extends JDETextEditor
         MenuItem compile = new MenuItem("Compile + Run");
         compile.setAccelerator(new KeyCodeCombination(KeyCode.F5));
         compile.setOnAction((evt)-> compile());
+        
+        MenuItem reparse = new MenuItem("Reparse JJSP");
+        reparse.setAccelerator(new KeyCodeCombination(KeyCode.F4));
+        reparse.setOnAction((evt)-> reparseJJSP());
+
         MenuItem stop = new MenuItem("Stop Server");
         stop.setOnAction((evt)-> stop());
 
@@ -225,7 +230,7 @@ public class SourcePane extends JDETextEditor
 
         Menu[] mm = super.createMenus();
         mm[0].setText("JJSP Actions");
-        mm[0].getItems().addAll(new SeparatorMenuItem(), compile, stop, new SeparatorMenuItem(), extraArgs, new SeparatorMenuItem(), saveArchive, clearHTTPLog);   
+        mm[0].getItems().addAll(new SeparatorMenuItem(), compile, reparse, new SeparatorMenuItem(), stop, new SeparatorMenuItem(), extraArgs, new SeparatorMenuItem(), saveArchive, clearHTTPLog);   
 
         CheckMenuItem showTranslation = new CheckMenuItem("Show JJSP Script Translation");
         showTranslation.setSelected(mainSplit.getItems().get(0) != leftPane);
@@ -595,6 +600,34 @@ public class SourcePane extends JDETextEditor
             return ((JDEditor) editor).getTranslatedText();
         else
             return editor.getText();
+    }
+
+    public void reparseJJSP()
+    {
+        synchronized (this)
+        {
+            if (jjspEngine == null)
+            {
+                appendStatus("No JJSP Engine currently running", null);
+                return;
+            }
+
+            setErrorLine(-1);
+            generatedOutputs = null;
+            clearStatus();
+            log.clear();
+        }
+
+        appendStatus(new Date()+" Reparsing JJSP Source", null);
+        try
+        {
+            jjspEngine.restart();
+            appendStatus(new Date()+" JJSP Engine restarted", null);
+        }
+        catch (Exception e)
+        {
+            appendStatus(new Date()+" Error during JJSP Restart", e);
+        }
     }
 
     public void compile()

@@ -1097,6 +1097,11 @@ public class JDE extends Application
 
     public void runMainTab()
     {
+        runMainTab(false);
+    }
+
+    public void runMainTab(boolean reparseOnly)
+    {
         URITabPane tgt = outputTabs1;
         URITabPane.URITab mainTab = outputTabs1.getMainMarkedTab();
         if (mainTab == null)
@@ -1111,8 +1116,13 @@ public class JDE extends Application
         tgt.showTab(mainTab.getURI());
         JDEComponent comp = mainTab.jdeComponent;
         if (comp instanceof SourcePane)
-            ((SourcePane) comp).compile();
-    }    
+        {
+            if (reparseOnly)
+                ((SourcePane) comp).reparseJJSP();
+            else
+                ((SourcePane) comp).compile();
+        }    
+    }
     
     public void start(final Stage primaryStage) throws Exception
     {
@@ -1164,7 +1174,7 @@ public class JDE extends Application
             final URL resource = getClass().getResource("/resources/ui-styles.css");
             scene.getStylesheets().add(resource.toExternalForm());
 
-            scene.addEventFilter(KeyEvent.KEY_RELEASED, (keyEvent) -> {if (keyEvent.getCode() == KeyCode.F6) {keyEvent.consume(); runMainTab(); }});
+            scene.addEventFilter(KeyEvent.KEY_RELEASED, (keyEvent) -> {if (keyEvent.getCode() == KeyCode.F6) {keyEvent.consume(); runMainTab(true); }});
  
             primaryStage.setTitle("JJSP Browser");
             if (iconCache.getJJSPImage() != null)

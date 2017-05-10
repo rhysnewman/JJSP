@@ -40,7 +40,7 @@ public class JJSPRuntime extends Environment
 
     public static final int DEFAULT_PORT_BASE = 2016;
 
-    private boolean initComplete;
+    private boolean initComplete, restarting;
     private volatile boolean stopRequested;
 
     private HashSet includedFiles;
@@ -61,6 +61,7 @@ public class JJSPRuntime extends Environment
         super(rootURI, localCacheDir, args);
 
         initComplete = false;
+        restarting = false;
         stopRequested = false;
         shutdownHook = null;
         closeOnExit = new ArrayList();
@@ -99,7 +100,12 @@ public class JJSPRuntime extends Environment
 
     public synchronized boolean initialised()
     {
-        return initComplete;
+        return initComplete && !restarting();
+    }
+
+    public synchronized boolean restarting()
+    {
+        return restarting;
     }
 
     @Override
@@ -116,6 +122,30 @@ public class JJSPRuntime extends Environment
         init(jsSource);
     }
 
+    private void setupScriptVariables() throws ScriptException
+    {
+        ScriptContext jsContext = scriptEngine.getContext();
+        jsContext.setAttribute(JJSP_NAME, this, ScriptContext.ENGINE_SCOPE);
+
+        jsContext.setWriter(outputWriter);
+        jsContext.setErrorWriter(outputWriter);
+        jsContext.setReader(null);
+
+        scriptEngine.eval(wrapFunctionScript(ImageGenerator.class, JJSP_NAME));
+        scriptEngine.eval(wrapFunctionScript(Environment.class, JJSP_NAME));
+        scriptEngine.eval(wrapFunctionScript(JJSPRuntime.class, JJSP_NAME));
+
+        scriptEngine.eval("delete exit");
+        scriptEngine.eval("delete quit");
+        scriptEngine.eval("$p=function(arg){jjsp.print(arg);};");
+        scriptEngine.eval("$log=function(arg){jjsp.println(new Date()+':  '+arg);};");
+        scriptEngine.eval("console=$log");
+        scriptEngine.eval("console.log=$log");
+        scriptEngine.eval("output=function(n, f){if (typeof f == 'function') return jjsp.putLocal(n, f()); else return jjsp.putLocal(n, f);}");
+
+        scriptEngine.put(ScriptEngine.FILENAME, TOP_LEVEL_SOURCE_PATH);
+    }
+
     public void init(String jsSource) throws Exception
     {
         if (initialised())
@@ -126,7 +156,7 @@ public class JJSPRuntime extends Environment
         {
             Thread.currentThread().setContextClassLoader(getLibraryLoader());
 
-            synchronized (engineManager)
+            synchronized (this)
             {
                 try
                 {
@@ -137,27 +167,8 @@ public class JJSPRuntime extends Environment
                 if (scriptEngine == null)
                     scriptEngine = engineManager.getEngineByName("javascript");
             }
-
-            ScriptContext jsContext = scriptEngine.getContext();
-            jsContext.setAttribute(JJSP_NAME, this, ScriptContext.ENGINE_SCOPE);
-
-            jsContext.setWriter(outputWriter);
-            jsContext.setErrorWriter(outputWriter);
-            jsContext.setReader(null);
-
-            scriptEngine.eval(wrapFunctionScript(ImageGenerator.class, JJSP_NAME));
-            scriptEngine.eval(wrapFunctionScript(Environment.class, JJSP_NAME));
-            scriptEngine.eval(wrapFunctionScript(JJSPRuntime.class, JJSP_NAME));
-
-            scriptEngine.eval("delete exit");
-            scriptEngine.eval("delete quit");
-            scriptEngine.eval("$p=function(arg){jjsp.print(arg);};");
-            scriptEngine.eval("$log=function(arg){jjsp.println(new Date()+':  '+arg);};");
-            scriptEngine.eval("console=$log");
-            scriptEngine.eval("console.log=$log");
-            scriptEngine.eval("output=function(n, f){if (typeof f == 'function') return jjsp.putLocal(n, f()); else return jjsp.putLocal(n, f);}");
-
-            scriptEngine.put(ScriptEngine.FILENAME, TOP_LEVEL_SOURCE_PATH);
+            
+            setupScriptVariables();
             scriptEngine.eval(jsSource);
 
             synchronized (this)
@@ -167,6 +178,37 @@ public class JJSPRuntime extends Environment
         }
         finally
         {
+            Thread.currentThread().setContextClassLoader(currentLoader);
+        }
+    }
+
+    void reparseJJSP(String jsSource) throws Exception
+    {
+        if (!initialised())
+            throw new IllegalStateException("JJSP Runtime not initialised");
+        
+        ClassLoader currentLoader = Thread.currentThread().getContextClassLoader();
+        try
+        {
+            Thread.currentThread().setContextClassLoader(getLibraryLoader());
+
+            synchronized (this)
+            {
+                if (scriptEngine == null)
+                    throw new IllegalStateException("No script engine initialised - rerun JJSP");
+                restarting = true;
+                includedFiles = new HashSet();
+            }
+
+            setupScriptVariables();
+            scriptEngine.eval(jsSource);
+        }
+        finally
+        {
+            synchronized (this)
+            {
+                restarting = false;
+            }
             Thread.currentThread().setContextClassLoader(currentLoader);
         }
     }

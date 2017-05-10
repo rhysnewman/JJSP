@@ -33,7 +33,7 @@ import jjsp.http.*;
 import jjsp.util.*;
 import jjsp.http.filters.*;
 
-public class Engine implements Runnable
+public class Engine
 {
     private final Map args;
     private final String jsSrc;
@@ -42,7 +42,7 @@ public class Engine implements Runnable
 
     private HTTPServer server;
     private JJSPRuntime jjspRuntime;
-    private boolean started, stop, running;
+    private boolean started, stop, running, restarting;
 
     public Engine(String jsSrc, URI sourceURI, URI rootURI, File localCacheDir, Map args)
     {
@@ -52,7 +52,7 @@ public class Engine implements Runnable
         this.localCacheDir = localCacheDir;
         this.args = args;
 
-        started = stop = running = false;
+        started = stop = running = restarting = false;
     }
 
     public synchronized void start()
@@ -61,8 +61,26 @@ public class Engine implements Runnable
             throw new IllegalStateException("Engine already started");
         if (stop)
             throw new IllegalStateException("Engine has been stopped");
+        if (restarting)
+            throw new IllegalStateException("Engine restarting");
+
         started = true;
-        new Thread(this).start();
+        new Thread(new Initialiser()).start();
+    }
+
+    public synchronized void restart()
+    {
+        if (!started)
+            throw new IllegalStateException("Engine not yet started");
+        if (stop)
+            throw new IllegalStateException("Engine has been stopped");
+        if (!running)
+            throw new IllegalStateException("Engine not yet finished starting");
+        if (restarting)
+            throw new IllegalStateException("Engine already restarting");
+        
+        restarting = true;
+        new Thread(new Restarter()).start();
     }
 
     public synchronized boolean started()
@@ -73,6 +91,11 @@ public class Engine implements Runnable
     public synchronized boolean isRunning() 
     {
         return running;
+    }
+
+    public synchronized boolean isRestarting()
+    {
+        return restarting;
     }
 
     public synchronized boolean stopped()
@@ -99,6 +122,11 @@ public class Engine implements Runnable
             notifyAll();
         }
 
+        stopInternal();        
+    }
+
+    private void stopInternal()
+    {
         try
         {
             server.close();
@@ -191,6 +219,11 @@ public class Engine implements Runnable
         getRuntime().init(jsSrc);
     }
 
+    protected void recompile(JJSPRuntime runtime, String jsSrc) throws Exception
+    {
+        getRuntime().reparseJJSP(jsSrc);
+    }
+
     protected Logger getLogger()
     {
         return Logger.getGlobal();
@@ -251,83 +284,162 @@ public class Engine implements Runnable
         return rt.getAndClearJJSPOutput();
     }
 
-    public void run()
+    private boolean openServerPorts(JJSPRuntime jr) throws Exception
     {
-        boolean launchOK = false;
-        try
+        ServerSocketInfo[] ssInfo = jr.getServerSockets();
+        if ((ssInfo == null) || (ssInfo.length == 0))
+            ssInfo = new ServerSocketInfo[]{getDefaultServerSocket(jr)};
+
+        boolean isListening = false;
+        for (int p=0; p<ssInfo.length; p++)
         {
-            JJSPRuntime jr = new JJSPRuntime(rootURI, localCacheDir, args);
-            jr.addResourcePathRoot(sourceURI);
-            jr.setLogger(getLogger());
+            Exception listenError = null;
+            ServerSocketInfo info = ssInfo[p];
 
-            synchronized (this)
+            for (int i=0; i<5; i++)
             {
-                if (stop)
-                    throw new IllegalStateException("Engine stopped before launch");
-                jjspRuntime = jr;
-            }
-
-            compile(jr, jsSrc);
-            if (createServer(jr) == null)
-            {
-                launchComplete(null, jjspRuntime, false);
-                return;
-            }
-
-            ServerSocketInfo[] ssInfo = jr.getServerSockets();
-            if ((ssInfo == null) || (ssInfo.length == 0))
-                ssInfo = new ServerSocketInfo[]{getDefaultServerSocket(jr)};
-
-            boolean isListening = false;
-            for (int p=0; p<ssInfo.length; p++)
-            {
-                Exception listenError = null;
-                ServerSocketInfo info = ssInfo[p];
-
-                for (int i=0; i<5; i++)
+                listenError = null;
+                try
                 {
-                    listenError = null;
-                    try
-                    {
-                        server.listenOn(info.port, info.isSecure, info.ipAddress);
-                        isListening = true;
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        listenError = e;
-                    }
-                    catch (Throwable t)
-                    {
-                        listenError = new IOException("Error Listening on "+info, t);
-                    }
-
-                    try
-                    {
-                        Thread.sleep(100);
-                    }
-                    catch (Exception e) {}
+                    server.listenOn(info.port, info.isSecure, info.ipAddress);
+                    isListening = true;
+                    break;
+                }
+                catch (Exception e)
+                {
+                    listenError = e;
+                }
+                catch (Throwable t)
+                {
+                    listenError = new IOException("Error Listening on "+info, t);
                 }
 
-                serverListening(server, info, listenError);
+                try
+                {
+                    Thread.sleep(100);
+                }
+                catch (Exception e) {}
             }
 
-            launchComplete(server, jjspRuntime, isListening);
-            if (!isListening)
-                stop();
-            else
-                launchOK = true;
+            serverListening(server, info, listenError);
         }
-        catch (Throwable t)
+        
+        return isListening;
+    }
+
+    class Restarter implements Runnable
+    {
+        public void run() 
         {
-            runtimeError(t);
+            boolean launchOK = false;
+            try
+            {
+                synchronized (Engine.this)
+                {
+                    if (stop)
+                        throw new IllegalStateException("Engine stopped before restart");
+
+                    stopInternal();
+                    started = true;
+                    restarting = true;
+                }
+
+                JJSPRuntime jr = getRuntime();
+                jr.reset(sourceURI);
+                jr.setLogger(getLogger());
+
+                recompile(jr, jsSrc);
+                if (createServer(jr) == null)
+                {
+                    launchComplete(null, jjspRuntime, false);
+                    return;
+                }
+
+                boolean isListening = openServerPorts(jr);
+                launchComplete(server, jjspRuntime, isListening);
+
+                if (!isListening)
+                    stop();
+                else
+                    launchOK = true;
+            }
+            catch (Throwable t)
+            {
+                runtimeError(t);
+            }
+            finally
+            {
+                synchronized (Engine.this)
+                {
+                    restarting = false;
+                }
+
+                if (!launchOK)
+                    stop();
+                else
+                {
+                    synchronized (Engine.this)
+                    {
+                        running = true;
+                    }
+                }
+            }
         }
-        finally
+    }
+
+    class Initialiser implements Runnable
+    {
+        public void run()
         {
-            if (!launchOK)
-                stop();
-            else
-                running = true;
+            boolean launchOK = false;
+            try
+            {
+                JJSPRuntime jr = new JJSPRuntime(rootURI, localCacheDir, args);
+                jr.addResourcePathRoot(sourceURI);
+                jr.setLogger(getLogger());
+
+                synchronized (Engine.this)
+                {
+                    if (stop)
+                        throw new IllegalStateException("Engine stopped before launch");
+                    jjspRuntime = jr;
+                }
+
+                compile(jr, jsSrc);
+                if (createServer(jr) == null)
+                {
+                    launchComplete(null, jjspRuntime, false);
+                    return;
+                }
+
+                ServerSocketInfo[] ssInfo = jr.getServerSockets();
+                if ((ssInfo == null) || (ssInfo.length == 0))
+                    ssInfo = new ServerSocketInfo[]{getDefaultServerSocket(jr)};
+
+                boolean isListening = openServerPorts(jr);
+                launchComplete(server, jjspRuntime, isListening);
+
+                if (!isListening)
+                    stop();
+                else
+                    launchOK = true;
+            }
+            catch (Throwable t)
+            {
+                runtimeError(t);
+            }
+            finally
+            {
+                if (!launchOK)
+                    stop();
+                else
+                {
+                    synchronized (Engine.this)
+                    {
+                        running = true;
+                    }
+                }
+            }
         }
     }
 

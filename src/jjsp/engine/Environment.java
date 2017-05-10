@@ -47,10 +47,10 @@ public class Environment extends ImageGenerator
     private ArrayList resourcePathRoots;
     private File localCacheDir, servicesCacheDir;
 
-    private final HashMap serviceLoaders;
+    private Set ourClassLoaders;
+    private HashMap serviceLoaders;
     private URLClassLoader libraryLoader;
     private TreeMap registeredDataInfoIndices;
-    private final Set ourClassLoaders;
 
     public Environment() throws IOException
     {
@@ -99,16 +99,25 @@ public class Environment extends ImageGenerator
         if (args != null)
             this.args.putAll(args);
 
-        localContent = new TreeMap();
-        resourcePathRoots = new ArrayList();
-        addResourcePathRoot(rootURI);
-
-        ourClassLoaders = new HashSet();
         serviceLoaders = new HashMap();
-        registeredDataInfoIndices = new TreeMap();
-        libraryLoader = createLibraryLoader();
-        clearSunJarFileFactoryCache();
+        ourClassLoaders = new HashSet();
 
+        libraryLoader = createLibraryLoader();
+
+        clearSunJarFileFactoryCache();
+        reset(null);
+    }
+
+    synchronized void reset(URI initialResourceURI)
+    {
+        localContent = new TreeMap();
+
+        resourcePathRoots = new ArrayList();
+        resourcePathRoots.add(rootURI);
+        if (initialResourceURI != null)
+            resourcePathRoots.add(initialResourceURI);
+            
+        registeredDataInfoIndices = new TreeMap();
     }
 
     private static void clearSunJarFileFactoryCache() 
@@ -127,7 +136,7 @@ public class Environment extends ImageGenerator
             Map urlCache = (Map) urlCacheField.get(null);
             urlCache.clear();
         }
-        catch (Exception e) { }
+        catch (Throwable e) { }
         // Unable to clear the cache, but we shouldn't have been messing with it anyway. Maybe we're on OpenJDK
     }
 
@@ -408,7 +417,7 @@ public class Environment extends ImageGenerator
             throw new NullPointerException("NULL Service name");
 
         URLClassLoader result = null;
-        synchronized (serviceLoaders)
+        synchronized (this)
         {
             result = (URLClassLoader) serviceLoaders.get(serviceName);
             if (result != null)
@@ -422,7 +431,7 @@ public class Environment extends ImageGenerator
         result = createClassLoaderFromDirURI(svcURI, getLibraryLoader());
 
         URLClassLoader ll;
-        synchronized (serviceLoaders)
+        synchronized (this)
         {
             ll = (URLClassLoader) serviceLoaders.get(serviceName);
             if (ll == null)
@@ -599,7 +608,7 @@ public class Environment extends ImageGenerator
                 throw new IOException("Unknown URI scheme: '"+uri+"'");
         }
         
-        synchronized (localContent)
+        synchronized (this)
         {
             localContent.put(path, contents);
         }
@@ -608,7 +617,7 @@ public class Environment extends ImageGenerator
 
     public String[] listLocal()
     {
-        synchronized (localContent)
+        synchronized (this)
         {
             String[] result = new String[localContent.size()];
             localContent.keySet().toArray(result);
@@ -619,7 +628,7 @@ public class Environment extends ImageGenerator
     public boolean deleteLocal(String name)
     {
         name = checkLocalResourcePath(name);
-        synchronized (localContent)
+        synchronized (this)
         {
             return localContent.remove(name) != null;
         }
@@ -632,7 +641,7 @@ public class Environment extends ImageGenerator
         name = checkLocalResourcePath(name);
         
         Object obj = null;
-        synchronized (localContent)
+        synchronized (this)
         {
             obj = localContent.get(name);
             if (obj == null)
@@ -1281,16 +1290,21 @@ public class Environment extends ImageGenerator
         return buf.toString();
     }
 
-    private URLClassLoader recordClassLoader(URLClassLoader cl) {
-        synchronized (ourClassLoaders) {
+    private URLClassLoader recordClassLoader(URLClassLoader cl) 
+    {
+        synchronized (this) 
+        {
             ourClassLoaders.add(cl);
         }
         return cl;
     }
 
-    void closeEnvironment() throws IOException {
-        synchronized (ourClassLoaders) {
-            for (Object ourClassLoaderObj : ourClassLoaders) {
+    void closeEnvironment() throws IOException 
+    {
+        synchronized (this) 
+        {
+            for (Object ourClassLoaderObj : ourClassLoaders) 
+            {
                 URLClassLoader cl = (URLClassLoader) ourClassLoaderObj;
                 cl.close();
             }
