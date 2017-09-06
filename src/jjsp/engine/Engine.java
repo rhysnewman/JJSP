@@ -554,6 +554,32 @@ public class Engine
         Engine engine = new DefaultEngine(jsSrc, srcFile, rootDir, cacheDir, args);
         engine.start();
 
+        new Thread(()-> {
+                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+                while (true)
+                {
+                    try
+                    {
+                        String consoleLine = br.readLine();
+
+                        if (consoleLine.toLowerCase().startsWith("e"))
+                        {
+                            System.out.println(new Date()+"   ====== EXIT REQUESTED BY CONSOLE USER ======");
+                            engine.stop();
+                        }
+                        else if (consoleLine.toLowerCase().startsWith("r"))
+                        {
+                            System.out.println(new Date()+"   ====== RESTART REQUESTED BY CONSOLE USER ======");
+                            engine.restart();
+                        }
+                    }
+                    catch (Exception e) 
+                    {
+                        try { Thread.sleep(100); } catch (Exception ee){}
+                    }
+                }
+        }).start();
+
         while (true)
         {
             String output = engine.getLatestConsoleOutput();
@@ -566,7 +592,7 @@ public class Engine
                 engine.stop();
             try
             {
-                Thread.sleep(200);
+                Thread.sleep(100);
             }
             catch (Exception e) {}
         }

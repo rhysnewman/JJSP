@@ -147,11 +147,16 @@ public class ScriptParser
                 {
                     String singleKeyword = null;
                     for (int j=0; j<SINGLE_KEYWORDS.length; j++)
-                        if (regionMatches(i, SINGLE_KEYWORDS[j]) && !isIdentifierPart(src, i + SINGLE_KEYWORDS[j].length()))
+                    {
+                        boolean bracketedKeyword = SINGLE_KEYWORDS[j].endsWith("}");
+                        boolean keywordIsolated = !isIdentifierPart(src, i + SINGLE_KEYWORDS[j].length());
+                        
+                        if (regionMatches(i, SINGLE_KEYWORDS[j]) && (bracketedKeyword || keywordIsolated))
                         {
                             singleKeyword = SINGLE_KEYWORDS[j];
                             break;
                         }
+                    }
 
                     if ((singleKeyword != null) && (singleKeyword.indexOf("elseif") < 0))
                     {
