@@ -1,6 +1,6 @@
 sysname = $(shell uname -o)
 cygwinname = Cygwin
-version = 5.22
+version = 5.25
 
 .PHONY: build
 build: compile jjsp

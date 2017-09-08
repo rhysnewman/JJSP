@@ -560,6 +560,7 @@ public class Engine
                 {
                     try
                     {
+                        System.out.println("JJSP ['e' to exit, 'r' to recompile] > ");
                         String consoleLine = br.readLine();
 
                         if (consoleLine.toLowerCase().startsWith("e"))

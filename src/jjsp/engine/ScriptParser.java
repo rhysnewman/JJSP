@@ -755,7 +755,47 @@ public class ScriptParser
             }
         }
         
-        return writer.toString();
+        return postProcessTranslation(writer.toString());
+    }
+
+    private String postProcessTranslation(String js)
+    {
+        String[] lines = js.split("\n");
+        StringBuffer buffer = new StringBuffer();
+        
+        for (int i=0; i<lines.length; i++)
+        {
+            String line = lines[i];
+            StringBuffer reducedLine = new StringBuffer();
+
+            int pos = 0;
+            boolean allWhitespacePrinting = true;
+            while (allWhitespacePrinting)
+            {
+                int start = line.indexOf("$p(\"", pos);
+                if (start < 0)
+                    break;
+                int end = line.indexOf("\")", start+4);
+                if (end < 0)
+                    break;
+
+                for (int j=start+4; j<end; j++)
+                    if (line.charAt(j) != ' ')
+                        allWhitespacePrinting = false;
+                
+                reducedLine.append(line.substring(pos, start+4));
+                pos = end;
+            }
+            
+            reducedLine.append(line.substring(pos));
+            if (allWhitespacePrinting)
+                buffer.append(reducedLine);
+            else
+                buffer.append(line);
+            buffer.append("\n");
+        }
+
+        return buffer.toString();
     }
 
     public void printParts()
