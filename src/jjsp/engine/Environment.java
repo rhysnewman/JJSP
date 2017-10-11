@@ -164,8 +164,7 @@ public class Environment extends ImageGenerator
 
     public boolean hasArg(String name)
     {
-        String val = getArg(name, "false");
-        return val.equalsIgnoreCase("true");
+        return args.get(name.toLowerCase()) != null;
     }
 
     public String getArg(String name)
