@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.http;
@@ -29,7 +29,8 @@ import jjsp.util.*;
 public class HTTPUtils
 {
     public static final Charset ASCII = Charset.forName("US-ASCII");
-    
+    public static final Charset UTF8 = Charset.forName("UTF-8");
+
     private AES aes;
     private String aesPassword;
     private MessageDigest md5;
@@ -39,18 +40,18 @@ public class HTTPUtils
     private String lastFormat;
 
     private static String cachedHostName = "localhost";
-    static 
+    static
     {
-        try 
+        try
         {
             cachedHostName = InetAddress.getLocalHost().getCanonicalHostName();
-        } 
-        catch (Throwable e) 
+        }
+        catch (Throwable e)
         {
-            try 
+            try
             {
                 cachedHostName = InetAddress.getLocalHost().getHostAddress();
-            } 
+            }
             catch (Throwable ee) {}
         }
     }
@@ -62,14 +63,14 @@ public class HTTPUtils
             return new HTTPUtils();
         }
     }
-    
+
     private static final ThreadLocal localUtils = new LocalUtils();
 
     public static HTTPUtils getUtils()
     {
         return (HTTPUtils) localUtils.get();
     }
-    
+
     public HTTPUtils()
     {
         httpDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", DateFormatSymbols.getInstance(Locale.US));
@@ -79,7 +80,7 @@ public class HTTPUtils
             httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         }
         catch (Exception e) {}
-        
+
         lastFormattedTime = System.currentTimeMillis();
         lastFormat = httpDateFormat.format(lastFormattedTime);
 
@@ -91,10 +92,10 @@ public class HTTPUtils
 
         try
         {
-            sha256 = MessageDigest.getInstance("SHA-256"); 
+            sha256 = MessageDigest.getInstance("SHA-256");
         }
         catch (Exception e) {}
-        
+
         aesPassword = null;
         aes = null;
     }
@@ -114,7 +115,7 @@ public class HTTPUtils
         return sha256;
     }
 
-    public byte[] SHA256(byte[] input) throws Exception 
+    public byte[] SHA256(byte[] input) throws Exception
     {
         return sha256.digest(input);
     }
@@ -138,7 +139,7 @@ public class HTTPUtils
 
         return "NOMD5_"+System.currentTimeMillis();
     }
-    
+
     public static String getThisHostName()
     {
         return cachedHostName;
