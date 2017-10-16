@@ -187,9 +187,20 @@ public class HTMLFormPart
 
             while ( seekSequence(rawBody, dataStart, endPos, CRLF) == dataStart )
                 dataStart += 2;
+            if ( dataStart >= endPos ) {
+                startPos = endPos + submissionBoundary.length;
+                continue;
+            }
 
-            while ( seekSequence(rawBody, endPos - 2, endPos, CRLF) == endPos - 2 )
+            int endPosCRLFCount = 0;
+            while ( seekSequence(rawBody, endPos - 2, endPos, CRLF) == endPos - 2 ) {
                 endPos -= 2;
+                endPosCRLFCount++;
+            }
+            if ( endPos <= startPos ) {
+                startPos = endPos + submissionBoundary.length + endPosCRLFCount * 2;
+                continue;
+            }
 
             byte[] raw = new byte[endPos - dataStart];
             System.arraycopy(rawBody, dataStart, raw, 0, raw.length);
@@ -197,7 +208,7 @@ public class HTMLFormPart
             HTMLFormPart part = new HTMLFormPart(attributes, raw);
             formParts.add(part);
 
-            startPos = endPos + submissionBoundary.length;
+            startPos = endPos + submissionBoundary.length + endPosCRLFCount * 2;
         }
 
         HTMLFormPart[] results = new HTMLFormPart[formParts.size()];
