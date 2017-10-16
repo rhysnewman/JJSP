@@ -586,16 +586,8 @@ public class HTTPInputStream extends InputStream
 
             //multipart post
             if ((type != null) && type.contains("multipart/form-data"))
-            {
-                HTMLFormPart[] parts = HTMLFormPart.processPostedFormData(headers, rawContent);
-
-                if (parts != null)
-                {
-                    for (int i = 0; i < parts.length; i++)
-                        output.put(parts[i].getAttribute("name"), new String(parts[i].getData(), "UTF-8"));
-                }
-            } //simple post
-            else
+                output = getMultiPartFormData(maxPostLength);
+            else //simple post
             {
                 String data = Utils.toString(rawContent);
                 if ( (type != null) && type.contains("application/x-www-form-urlencoded") )
@@ -614,5 +606,36 @@ public class HTTPInputStream extends InputStream
             return headers.parseHTTPQueryParameters(headers.getQueryString());
         else
             return new HashMap();
+    }
+
+    public Map getMultiPartFormData(int maxPostLength) throws IOException {
+        HTTPRequestHeaders headers = getHeaders();
+        String type = headers.getHeader("Content-Type", null);
+        if ( !headers.isPost() || type == null || !type.contains("multipart/form-data") )
+            return new HashMap();
+
+        Map results = new HashMap();
+        byte[] rawContent = readRawContent(maxPostLength);
+        HTMLFormPart[] formParts = HTMLFormPart.processPostedFormData(headers, rawContent);
+        if ( formParts != null ) {
+            for ( HTMLFormPart formPart : formParts ) {
+                String name = formPart.getAttribute("name");
+                if ( name.endsWith("[]") ) {
+                    HTMLFormPart[] array;
+                    if ( results.containsKey(name) ) {
+                        array = (HTMLFormPart[]) results.get(name);
+                        array = Arrays.copyOf(array, array.length + 1);
+                        array[array.length - 1] = formPart;
+                    }
+                    else
+                        array = new HTMLFormPart[]{formPart};
+                    results.put(name, array);
+
+                }
+                else
+                    results.put(name, formPart);
+            }
+        }
+        return results;
     }
 }

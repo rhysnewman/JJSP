@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.http;
@@ -30,12 +30,11 @@ public class HTMLFormPart
     public static final String CONTENT_TYPE_KEY = "Content-Type";
     public static final String BOUNDARY_KEY = "boundary";
 
-    private static final byte[] CRLF_CRLF = "\r\n\r\n".getBytes(HTTPUtils.ASCII);
-    private static final byte[] CRLF = "\r\n".getBytes(HTTPUtils.ASCII);
+    private static final byte[] CRLF = "\r\n".getBytes(HTTPUtils.UTF8);
 
     private Map attributes;
     private byte[] rawData;
-    
+
     public HTMLFormPart(Map attrs, byte[] data)
     {
         attributes = attrs;
@@ -59,7 +58,14 @@ public class HTMLFormPart
     {
         return rawData;
     }
-    
+
+    public String getDataAsString() throws IllegalAccessException {
+        if ( attributes.containsKey("contentType") )
+            throw new IllegalAccessException("Data for '" + attributes.get("name") + "' cannot be parsed as string, content-type: " + attributes.get("contentType"));
+
+        return new String(rawData, HTTPUtils.UTF8);
+    }
+
     public String toString()
     {
         return attributes+"  ["+rawData.length+"]";
@@ -72,8 +78,10 @@ public class HTMLFormPart
 
     private static int seekSequence(byte[] data, int start, int end, byte[] seq)
     {
-        end = Math.min(end, data.length-2) - seq.length;
-        
+        if ( seq.length > data.length )
+            return -1;
+        end = end - seq.length + 1;
+
         for (int i=start; i<end; i++)
         {
             int match = 0;
@@ -84,11 +92,11 @@ public class HTMLFormPart
                 else
                     match++;
             }
-            
+
             if (match == seq.length)
                 return i;
         }
-        
+
         return -1;
     }
 
@@ -111,7 +119,7 @@ public class HTMLFormPart
                 result.put(key, val);
             }
         }
-        
+
         return result;
     }
 
@@ -123,7 +131,7 @@ public class HTMLFormPart
         String type = headers.getHeader(CONTENT_TYPE_KEY, null);
         if (type == null)
             return null;
-        
+
         int index = type.toLowerCase().indexOf(BOUNDARY_KEY);
         if (index < 0)
             return null;
@@ -134,65 +142,77 @@ public class HTMLFormPart
     }
 
     /**
-       The main means of getting the parts of an HTML form from the raw posted data. 
+       The main means of getting the parts of an HTML form from the raw posted data.
      */
-    public static HTMLFormPart[] processPostedFormData(HTTPHeaders headers, byte[] rawBody)
-    {
+    public static HTMLFormPart[] processPostedFormData(HTTPHeaders headers, byte[] rawBody) {
         String boundaryString = extractFormDataBoundary(headers);
-        if (boundaryString == null)
+        if ( boundaryString == null )
             return null;
 
-        byte[] submissionBoundary = boundaryString.getBytes(HTTPUtils.ASCII);
-        int pos = seekSequence(rawBody, 0, submissionBoundary);
-        if (pos < 0)
+        byte[] submissionBoundary = boundaryString.getBytes(HTTPUtils.UTF8);
+        int startPos = seekSequence(rawBody, 0, submissionBoundary);
+        if ( startPos < 0 )
             return null;
-        pos += submissionBoundary.length;
-        
-        Vector buffer = new Vector();
-        while (true)
-        {
-            int nextPos = seekSequence(rawBody, pos, submissionBoundary);
-            if (nextPos < 0)
+        startPos += submissionBoundary.length;
+
+        Vector formParts = new Vector();
+        while ( true ) {
+            int endPos = seekSequence(rawBody, startPos, submissionBoundary);
+            if ( endPos < 0 )
                 break;
-            
-            int bodyEnd = nextPos;
-            if (rawBody[bodyEnd - 1] == '\n')
-                bodyEnd--;
-            if (rawBody[bodyEnd - 1] == '\r')
-                bodyEnd--;
-            
-            int end = seekSequence(rawBody, pos, CRLF_CRLF);
-            int bodyStart = -1;
-            if (end < 0)
-            {
-                end = seekSequence(rawBody, pos, CRLF);
-                if (end < 0)
-                    break;
-                bodyStart = end + 2;
-            }
-            else
-                bodyStart = end + 4;
-            
-            int valStart = seekSequence(rawBody, pos, CONTENT_DISPOSITION_KEY.getBytes(HTTPUtils.ASCII));
-            if (valStart < 0)
-                break;
+
+            int valStart = seekSequence(rawBody, startPos, endPos, CONTENT_DISPOSITION_KEY.getBytes(HTTPUtils.UTF8));
+            if ( valStart < 0 )
+                continue;
+
             valStart += CONTENT_DISPOSITION_KEY.length();
             int valEnd = seekSequence(rawBody, valStart, CRLF);
-            if (valEnd < 0)
-                break;
-            
-            Map attrs = extractAttrs(new String(rawBody, valStart, valEnd - valStart));
-            byte[] raw = new byte[bodyEnd - bodyStart];
-            System.arraycopy(rawBody, bodyStart, raw, 0, raw.length);
-            
-            HTMLFormPart part = new HTMLFormPart(attrs, raw);
-            buffer.add(part);
-            
-            pos = nextPos+submissionBoundary.length;
+            if ( valEnd < 0 )
+                continue;
+
+            Map attributes = extractAttrs(new String(rawBody, valStart, valEnd - valStart));
+            int dataStart = valEnd;
+
+            // put content type to attributes for binary data, images, files, etc
+            int cTypeStart = seekSequence(rawBody, startPos, endPos, CONTENT_TYPE_KEY.getBytes(HTTPUtils.UTF8));
+            if ( cTypeStart >= 0 ) {
+                cTypeStart += CONTENT_TYPE_KEY.length() + 1; // "Content-Type:"
+                int cTypeEnd = seekSequence(rawBody, cTypeStart, CRLF);
+                if ( cTypeEnd >= 0 ) {
+                    String contentType = new String(rawBody, cTypeStart, cTypeEnd - cTypeStart);
+                    attributes.put("contentType", contentType.trim());
+                    dataStart = cTypeEnd;
+                }
+            }
+
+            while ( seekSequence(rawBody, dataStart, endPos, CRLF) == dataStart )
+                dataStart += 2;
+            if ( dataStart >= endPos ) {
+                startPos = endPos + submissionBoundary.length;
+                continue;
+            }
+
+            int endPosCRLFCount = 0;
+            while ( seekSequence(rawBody, endPos - 2, endPos, CRLF) == endPos - 2 ) {
+                endPos -= 2;
+                endPosCRLFCount++;
+            }
+            if ( endPos <= startPos ) {
+                startPos = endPos + submissionBoundary.length + endPosCRLFCount * 2;
+                continue;
+            }
+
+            byte[] raw = new byte[endPos - dataStart];
+            System.arraycopy(rawBody, dataStart, raw, 0, raw.length);
+
+            HTMLFormPart part = new HTMLFormPart(attributes, raw);
+            formParts.add(part);
+
+            startPos = endPos + submissionBoundary.length + endPosCRLFCount * 2;
         }
 
-        HTMLFormPart[] result = new HTMLFormPart[buffer.size()];
-        buffer.toArray(result);
-        return result;
+        HTMLFormPart[] results = new HTMLFormPart[formParts.size()];
+        formParts.toArray(results);
+        return results;
     }
 }
