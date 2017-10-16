@@ -59,7 +59,8 @@ public class HTMLFormPart
         return rawData;
     }
 
-    public String getDataAsString() throws IllegalAccessException {
+    public String getDataAsString() throws IllegalAccessException 
+    {
         if ( attributes.containsKey("contentType") )
             throw new IllegalAccessException("Data for '" + attributes.get("name") + "' cannot be parsed as string, content-type: " + attributes.get("contentType"));
 

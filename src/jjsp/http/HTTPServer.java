@@ -128,7 +128,7 @@ public class HTTPServer extends Server
 
                 if (isHTTP11 && reqHdrs.expectsContinueResponse())
                     HTTPResponseHeaders.sendContinueResponse(output);
-                    
+
                 boolean closeConnection = !isHTTP11 || requestInput.getHeaders().closeConnection();
                 if (closeConnection)
                     requestOutput.getHeaders().setConnectionClose();
