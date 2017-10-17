@@ -258,6 +258,8 @@ public class HTTPHeaders
             return "application/zip";
         if (fileName.endsWith(".iso") || fileName.endsWith(".img"))
             return "application/octet-stream";
+        if (fileName.endsWith(".csv"))
+            return "text/csv";
 
         if (fileName.endsWith(".tiff"))
             return "image/tiff";
