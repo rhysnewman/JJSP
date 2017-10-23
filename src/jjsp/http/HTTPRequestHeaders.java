@@ -546,6 +546,13 @@ public class HTTPRequestHeaders extends HTTPHeaders
         return (String) cookieMap.get(key);
     }
 
+    public HttpCookie getHttpCookie(String key) {
+        String val = getCookie(key);
+        if ( val != null && !val.isEmpty() )
+            return new HttpCookie(key, val);
+        return null;
+    }
+
     public static Map parseCookies(String cookieString)
     {
         return parseCookies(cookieString, null);
