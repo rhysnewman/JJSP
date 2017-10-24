@@ -78,7 +78,7 @@ public class Engine
             throw new IllegalStateException("Engine not yet finished starting");
         if (restarting)
             throw new IllegalStateException("Engine already restarting");
-        
+
         restarting = true;
         new Thread(new Restarter()).start();
     }
@@ -88,7 +88,7 @@ public class Engine
         return started;
     }
 
-    public synchronized boolean isRunning() 
+    public synchronized boolean isRunning()
     {
         return running;
     }
@@ -122,7 +122,7 @@ public class Engine
             notifyAll();
         }
 
-        stopInternal();        
+        stopInternal();
     }
 
     private void stopInternal()
@@ -263,7 +263,7 @@ public class Engine
             getRuntime().println("Engine Running (Listening) "+new Date());
     }
 
-    protected void runtimeError(Throwable t) 
+    protected void runtimeError(Throwable t)
     {
         printStackTrace(t);
     }
@@ -323,13 +323,13 @@ public class Engine
 
             serverListening(server, info, listenError);
         }
-        
+
         return isListening;
     }
 
     class Restarter implements Runnable
     {
-        public void run() 
+        public void run()
         {
             boolean launchOK = false;
             try
@@ -556,13 +556,12 @@ public class Engine
 
         new Thread(()-> {
                 BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+                System.out.println("JJSP ['e' to exit, 'r' to recompile] > ");
                 while (true)
                 {
                     try
                     {
-                        System.out.println("JJSP ['e' to exit, 'r' to recompile] > ");
                         String consoleLine = br.readLine();
-
                         if (consoleLine.toLowerCase().startsWith("e"))
                         {
                             System.out.println(new Date()+"   ====== EXIT REQUESTED BY CONSOLE USER ======");
@@ -572,11 +571,12 @@ public class Engine
                         {
                             System.out.println(new Date()+"   ====== RESTART REQUESTED BY CONSOLE USER ======");
                             engine.restart();
+                            System.out.println("JJSP ['e' to exit, 'r' to recompile] > ");
                         }
                     }
-                    catch (Exception e) 
+                    catch (Exception e)
                     {
-                        try { Thread.sleep(100); } catch (Exception ee){}
+                        try { Thread.sleep(500); } catch (Exception ee){}
                     }
                 }
         }).start();
