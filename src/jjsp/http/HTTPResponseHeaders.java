@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.http;
@@ -58,7 +58,7 @@ public class HTTPResponseHeaders extends HTTPHeaders
     {
         setHeader("Connection", "close");
     }
-    
+
     public void setLastModified(long time)
     {
         if (time >= 0)
@@ -91,12 +91,12 @@ public class HTTPResponseHeaders extends HTTPHeaders
     {
         configureCacheControl(HTTPUtils.getUtils().createETag(rawData), maxAgeSeconds);
     }
- 
+
     public void configureCacheControl(String eTag, int maxAgeSeconds)
     {
         configureCacheControl(eTag, System.currentTimeMillis(), maxAgeSeconds);
     }
-    
+
     public void configureCacheControl(String eTag, long lastModified, int maxAgeSeconds)
     {
         configureCacheControl(eTag, true, lastModified, maxAgeSeconds);
@@ -203,7 +203,7 @@ public class HTTPResponseHeaders extends HTTPHeaders
         deleteHeader("Set-Cookie");
     }
 
-    public void setCookie(HttpCookie cookie) 
+    public void setCookie(HttpCookie cookie)
     {
         List ll = (List) headerMap.get("Set-Cookie");
         if (ll == null)
@@ -255,7 +255,7 @@ public class HTTPResponseHeaders extends HTTPHeaders
         if (allowBasicAuth)
             setHeader("WWW-Authenticate", "Basic");
     }
-    
+
     public void configureAsNotAuthorised(String basicAuthRealm)
     {
         configure(HTTP_UNAUTHORIZED, "Unauthorized");
@@ -269,7 +269,7 @@ public class HTTPResponseHeaders extends HTTPHeaders
     {
         configure(HTTP_NOT_FOUND, "Not Found");
     }
-    
+
     public void configureAsNotAllowed()
     {
         configureAsNotAllowed("Not Allowed");
@@ -332,7 +332,7 @@ public class HTTPResponseHeaders extends HTTPHeaders
             configure(HTTP_PERMANENT_REDIRECT, "Permanent Redirect");
         else
             throw new IllegalStateException("HTTP Redirect code unknown: "+httpRedirectCode);
-            
+
         setHeader("Location", location);
     }
 
@@ -436,25 +436,31 @@ public class HTTPResponseHeaders extends HTTPHeaders
     public static String formatSetCookie(HttpCookie cookie)
     {
         // Set-Cookie: value[; Expires=date][; Domain=domain][; Path=path][; Secure][; HttpOnly]
-        StringBuffer buf = new StringBuffer();
-        buf.append(cookie.getName()+"="+cookie.getValue());
-        if (cookie.getMaxAge() > 0)
-        {
-            synchronized (cookieExpiresFormat)
-            {
-                buf.append("; Expires="+cookieExpiresFormat.format(new Date(System.currentTimeMillis() + cookie.getMaxAge()*1000l)));
+        StringBuilder builder = new StringBuilder();
+        builder.append(cookie.getName()).append("=").append(cookie.getValue());
+
+        long maxAge = cookie.getMaxAge();
+        if ( maxAge >= 0 ) {
+            Date date = new Date(System.currentTimeMillis() + maxAge * 1000L);
+            synchronized ( cookieExpiresFormat ) {
+                builder.append("; Expires=").append(cookieExpiresFormat.format(date));
             }
         }
-        if (cookie.getDomain() != null)
-            buf.append("; Domain="+cookie.getDomain());
-        if (cookie.getPath() != null)
-            buf.append("; Path="+cookie.getPath());
-        if (cookie.getSecure())
-            buf.append("; Secure");
-        if (cookie.isHttpOnly())
-            buf.append("; HttpOnly");
-            
-        return buf.toString();
+
+        String domain = cookie.getDomain();
+        if ( domain != null && !domain.isEmpty() )
+            builder.append("; Domain=").append(domain);
+
+        String path = cookie.getPath();
+        if ( path != null && !path.isEmpty() )
+            builder.append("; Path=").append(path);
+
+        if ( cookie.getSecure() )
+            builder.append("; Secure");
+        if ( cookie.isHttpOnly() )
+            builder.append("; HttpOnly");
+
+        return builder.toString();
     }
 
     public static HttpCookie parseSetCookie(String raw)
@@ -464,11 +470,11 @@ public class HTTPResponseHeaders extends HTTPHeaders
             return null;
         String name = raw.substring(0, eq).trim();
         raw = raw.substring(eq+1);
-        
+
         int semi = raw.indexOf(";");
         if (semi < 0)
             return new HttpCookie(name, raw.trim());
-        
+
         HttpCookie result = new HttpCookie(name, raw.substring(semi).trim());
 
         raw = raw.substring(semi+1).trim();
