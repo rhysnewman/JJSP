@@ -265,6 +265,16 @@ public class HTTPResponseHeaders extends HTTPHeaders
             setHeader("WWW-Authenticate", "Basic");
     }
 
+    public void configureAsPermissionDenied()
+    {
+        configure(HTTP_UNAUTHORIZED, "Permission Denied");
+    }
+
+    public void configureAsPermissionDenied(String message)
+    {
+        configure(HTTP_UNAUTHORIZED, message);
+    }
+
     public void configureAsNotFound()
     {
         configure(HTTP_NOT_FOUND, "Not Found");
