@@ -78,7 +78,7 @@ public class Engine
             throw new IllegalStateException("Engine not yet finished starting");
         if (restarting)
             throw new IllegalStateException("Engine already restarting");
-        
+
         restarting = true;
         new Thread(new Restarter()).start();
     }
@@ -88,7 +88,7 @@ public class Engine
         return started;
     }
 
-    public synchronized boolean isRunning() 
+    public synchronized boolean isRunning()
     {
         return running;
     }
@@ -122,7 +122,7 @@ public class Engine
             notifyAll();
         }
 
-        stopInternal();        
+        stopInternal();
     }
 
     private void stopInternal()
@@ -263,7 +263,7 @@ public class Engine
             getRuntime().println("Engine Running (Listening) "+new Date());
     }
 
-    protected void runtimeError(Throwable t) 
+    protected void runtimeError(Throwable t)
     {
         printStackTrace(t);
     }
@@ -323,13 +323,13 @@ public class Engine
 
             serverListening(server, info, listenError);
         }
-        
+
         return isListening;
     }
 
     class Restarter implements Runnable
     {
-        public void run() 
+        public void run()
         {
             boolean launchOK = false;
             try
@@ -509,7 +509,7 @@ public class Engine
             System.out.println("        cache      : The directory name of the JJSP file cache directory, defaults to 'jjspcache' in the process working directory.");
             System.out.println("        logDir     : The log directory name relative to the current working directory (defaults to 'logs')");
             System.out.println("        nogui      : Specify that JJSP should run as a headless (server only) mode and not launch the JDE");
-            System.out.println("        server     : Synonym for 'nogui' above");
+            System.out.println("        server     : Launches without JDE and without recompile option input on console");
             System.out.println("   ");
             System.out.println("   Other arguments are allowed and are passed on to the JJSPRuntime");
             System.out.println("   NOTE: if not already specified, an additional option 'mode = production' is automatically added");
@@ -554,32 +554,33 @@ public class Engine
         Engine engine = new DefaultEngine(jsSrc, srcFile, rootDir, cacheDir, args);
         engine.start();
 
-        new Thread(()-> {
+        if ( !Args.hasArg("server") ) {
+            new Thread(() -> {
                 BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-                while (true)
+                while ( true )
                 {
                     try
                     {
                         System.out.println("JJSP ['e' to exit, 'r' to recompile] > ");
                         String consoleLine = br.readLine();
-
-                        if (consoleLine.toLowerCase().startsWith("e"))
+                        if ( consoleLine.toLowerCase().startsWith("e") )
                         {
-                            System.out.println(new Date()+"   ====== EXIT REQUESTED BY CONSOLE USER ======");
+                            System.out.println(new Date() + "   ====== EXIT REQUESTED BY CONSOLE USER ======");
                             engine.stop();
                         }
-                        else if (consoleLine.toLowerCase().startsWith("r"))
+                        else if ( consoleLine.toLowerCase().startsWith("r") )
                         {
-                            System.out.println(new Date()+"   ====== RESTART REQUESTED BY CONSOLE USER ======");
+                            System.out.println(new Date() + "   ====== RESTART REQUESTED BY CONSOLE USER ======");
                             engine.restart();
                         }
                     }
-                    catch (Exception e) 
+                    catch ( Exception e )
                     {
-                        try { Thread.sleep(100); } catch (Exception ee){}
+                        try {  Thread.sleep(500); } catch ( Exception ee ) {}
                     }
                 }
-        }).start();
+            }).start();
+        }
 
         while (true)
         {
