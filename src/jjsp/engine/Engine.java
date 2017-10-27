@@ -554,32 +554,37 @@ public class Engine
         Engine engine = new DefaultEngine(jsSrc, srcFile, rootDir, cacheDir, args);
         engine.start();
 
-        new Thread(()-> {
-                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-                while (true)
-                {
-                    try
+        // Console will be null if running without any connected stdin (e.g. as a background process under Linux)
+        Console c = System.console();
+        if (c != null)
+        {
+            new Thread(()-> {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+                    while (true)
                     {
-                        System.out.println("JJSP ['e' to exit, 'r' to recompile] > ");
-                        String consoleLine = br.readLine();
+                        try
+                        {
+                            System.out.println("JJSP ['e' to exit, 'r' to recompile] > ");
+                            String consoleLine = br.readLine();
 
-                        if (consoleLine.toLowerCase().startsWith("e"))
-                        {
-                            System.out.println(new Date()+"   ====== EXIT REQUESTED BY CONSOLE USER ======");
-                            engine.stop();
+                            if (consoleLine.toLowerCase().startsWith("e"))
+                            {
+                                System.out.println(new Date()+"   ====== EXIT REQUESTED BY CONSOLE USER ======");
+                                engine.stop();
+                            }
+                            else if (consoleLine.toLowerCase().startsWith("r"))
+                            {
+                                System.out.println(new Date()+"   ====== RESTART REQUESTED BY CONSOLE USER ======");
+                                engine.restart();
+                            }
                         }
-                        else if (consoleLine.toLowerCase().startsWith("r"))
+                        catch (Exception e) 
                         {
-                            System.out.println(new Date()+"   ====== RESTART REQUESTED BY CONSOLE USER ======");
-                            engine.restart();
+                            try { Thread.sleep(100); } catch (Exception ee){}
                         }
                     }
-                    catch (Exception e) 
-                    {
-                        try { Thread.sleep(100); } catch (Exception ee){}
-                    }
-                }
-        }).start();
+            }).start();
+        }
 
         while (true)
         {
