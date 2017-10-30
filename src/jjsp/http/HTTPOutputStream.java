@@ -266,7 +266,7 @@ public class HTTPOutputStream extends OutputStream
     {
         if (contentType != null)
             headers.setContentType(contentType);
-        else  if (!headers.contentTypeConfigured())
+        else if (!headers.contentTypeConfigured())
             headers.setContentType("text/html; charset=utf-8");
 
         if (contentEncoding != null)

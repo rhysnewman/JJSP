@@ -958,19 +958,33 @@ public class JJSPRuntime extends Environment
             if (content == null)
                 return false;
 
+            long start = 0, end = content.length;
+            long[] limits = request.getHeaders().extractByteRanges();
+
+            if (limits != null)
+            {
+                if (limits[1] > 0)
+                    end = Math.min(limits[1], end);
+                start = Math.max(0, Math.min(end, limits[0]));
+
+                response.getHeaders().configureAsPartialContent(start, end-1, content.length);
+            }
+            else
+                response.getHeaders().configureAsOK();
+
             response.getHeaders().configureCacheControl(cacheTime);
-            response.getHeaders().configureAsOK();
+            response.getHeaders().setContentLength(content.length);
             response.getHeaders().guessAndSetContentType(path, defaultContentType);
             if (contentEncoding != null)
                 response.getHeaders().setContentEncoding(contentEncoding);
 
             if (request.getHeaders().isHead())
             {
-                response.getHeaders().setContentLength(content.length);
+                response.getHeaders().setContentLength(end-start);
                 response.sendHeaders();
             }
             else
-                response.sendContent(content);
+                response.sendContent(content, (int) start, (int) (end-start));
 
             return true;
         }
