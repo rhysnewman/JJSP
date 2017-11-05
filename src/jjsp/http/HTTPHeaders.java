@@ -277,6 +277,8 @@ public class HTTPHeaders
             return "video/mp4";
         if (fileName.endsWith(".xpi"))
             return "application/x-xpinstall";
+        if (fileName.endsWith(".webm"))
+            return "video/webm";
 
         try
         {

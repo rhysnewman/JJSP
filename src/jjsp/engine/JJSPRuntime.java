@@ -958,7 +958,7 @@ public class JJSPRuntime extends Environment
             if (content == null)
                 return false;
 
-            long start = 0, end = content.length;
+            long start = 0, end = content.length-1;
             long[] limits = request.getHeaders().extractByteRanges();
 
             if (limits != null)
@@ -966,11 +966,15 @@ public class JJSPRuntime extends Environment
                 if (limits[1] > 0)
                     end = Math.min(limits[1], end);
                 start = Math.max(0, Math.min(end, limits[0]));
+                end = Math.max(start, end);
 
-                response.getHeaders().configureAsPartialContent(start, end-1, content.length);
+                response.getHeaders().configureAsPartialContent(start, end, content.length);
             }
             else
+            {
                 response.getHeaders().configureAsOK();
+                response.getHeaders().setContentLength(content.length);
+            }
 
             response.getHeaders().configureCacheControl(cacheTime);
             response.getHeaders().setContentLength(content.length);
@@ -979,12 +983,9 @@ public class JJSPRuntime extends Environment
                 response.getHeaders().setContentEncoding(contentEncoding);
 
             if (request.getHeaders().isHead())
-            {
-                response.getHeaders().setContentLength(end-start);
                 response.sendHeaders();
-            }
             else
-                response.sendContent(content, (int) start, (int) (end-start));
+                response.sendContent(content, (int) start, (int) (end-start+1));
 
             return true;
         }
