@@ -404,7 +404,7 @@ public class DirectoryFilter extends AbstractRequestFilter
                     if (limits[1] > 0)
                         end = Math.min(limits[1], end);
                     start = Math.max(0, Math.min(end, limits[0]));
-                    respHeaders.configureAsPartialContent();
+                    respHeaders.configureAsPartialContent(start, end, ds.length());
                 }
                 else
                     respHeaders.configureAsOK();
@@ -462,7 +462,7 @@ public class DirectoryFilter extends AbstractRequestFilter
                     if (limits[1] > 0)
                         end = Math.min(limits[1], end);
                     start = Math.max(0, Math.min(end, limits[0]));
-                    respHeaders.configureAsPartialContent();
+                    respHeaders.configureAsPartialContent(start, end, ds.length());
                 }
                 else
                     respHeaders.configureAsOK();
