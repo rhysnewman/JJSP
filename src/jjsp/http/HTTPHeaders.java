@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.http;
@@ -26,7 +26,7 @@ import java.security.*;
 
 import jjsp.util.*;
 
-public class HTTPHeaders 
+public class HTTPHeaders
 {
     public static final int MAX_HEADERS = 128;
     public static final String MAIN_LINE = "Main-Line";
@@ -86,7 +86,7 @@ public class HTTPHeaders
     {
         if (key == null)
             return;
-            
+
         if (value == null)
             headerMap.remove(key);
         else
@@ -120,12 +120,12 @@ public class HTTPHeaders
         {
             return Long.parseLong(getHeader("Content-Length", "-1"));
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             return -1;
         }
     }
-    
+
     public boolean isHTTP11()
     {
         return mainLine.endsWith("HTTP/1.1") || mainLine.startsWith("HTTP/1.1");
@@ -151,7 +151,7 @@ public class HTTPHeaders
         String spec = getHeader("Range", null);
         if (spec == null)
             return null;
-        
+
         try
         {
             long start = 0, end=-1;
@@ -193,7 +193,7 @@ public class HTTPHeaders
     {
         ps.print(getMainLine());
         ps.print("\r\n");
-        
+
         String[] keys = getHeaderKeys();
         for (int i=0; i<keys.length; i++)
         {
@@ -308,16 +308,7 @@ public class HTTPHeaders
                 result.put("Set-Cookie:"+cookie.getName(), cookie.getValue());
             }
         }
-        
-        return result;
-    }
 
-    public static String escapeHTML(String src)
-    {
-        String result = src.replace("&", "&amp;");
-        result = result.replace("<", "&lt;");
-        result = result.replace(">", "&gt;");
-        result = result.replace("\"", "&quot;");
         return result;
     }
 }

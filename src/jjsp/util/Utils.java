@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.util;
@@ -30,10 +30,15 @@ public class Utils
 {
     public static final String DEFAULT_VERSION_STRING = "5.25";
     public static final Charset ASCII = Charset.forName("US-ASCII");
+    public static final Charset UTF8 = Charset.forName("UTF-8");
 
     public static String toAsciiString(byte[] rawText)
     {
         return toString(rawText);
+    }
+
+    public static String toUTF8String(byte[] rawBytes) {
+        return new String(rawBytes, UTF8);
     }
 
     public static String toString(byte[] rawText)
@@ -114,7 +119,7 @@ public class Utils
                 cls = ref.getClass();
             return (URLClassLoader) cls.getClassLoader();
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             return (URLClassLoader) Utils.class.getClassLoader();
         }
@@ -163,7 +168,7 @@ public class Utils
                 throw new IOException("Maximum data length from input exceeded ("+dataLimit+")");
             bout.write(buffer, 0, r);
         }
-        
+
         if (closeOnComplete)
             in.close();
         return bout.toByteArray();
@@ -243,7 +248,7 @@ public class Utils
                     break;
                 if (entry.isDirectory())
                     continue;
-            
+
                 String path = entry.getName();
                 if (acceptor.test(path))
                     results.add(path);
@@ -299,7 +304,7 @@ public class Utils
 
             return true;
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             return false;
         }
@@ -310,7 +315,7 @@ public class Utils
         TreeSet ts = new TreeSet();
         URI uri = root.toURI();
         scanDirectory(ts, acceptor, uri, uri);
-        
+
         String[] result = new String[ts.size()];
         ts.toArray(result);
         return result;
@@ -328,7 +333,7 @@ public class Utils
             } catch (Exception e) {
             }
         }
-        
+
         String[] result = new String[ts.size()];
         ts.toArray(result);
         return result;
@@ -375,7 +380,7 @@ public class Utils
         return find(acceptor, (URLClassLoader) Utils.class.getClassLoader());
     }
 
-    public static int getFreeSocket(InetAddress bindAddress, int portRangeStart, int portRangeEnd) 
+    public static int getFreeSocket(InetAddress bindAddress, int portRangeStart, int portRangeEnd)
     {
         for (int port=portRangeStart; port<portRangeEnd; port++)
         {
@@ -407,14 +412,14 @@ public class Utils
     private static MessageDigest sha1;
     private static MessageDigest sha256;
     private static CRC32 crc32 = new CRC32();
-    
+
     static
     {
         try
         {
             md5 = MessageDigest.getInstance("MD5");
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             throw new NullPointerException("No MD5 Implementation");
         }
@@ -461,7 +466,7 @@ public class Utils
         return formatter.toString();
     }
 
-    public static byte[] fromHexString(String in) 
+    public static byte[] fromHexString(String in)
     {
         byte[] res = new byte[in.length()/2];
         for (int i=0, j=0; i < res.length; i++, j+=2)
@@ -502,7 +507,7 @@ public class Utils
         catch (Exception e) {}
         return null;
     }
-       
+
     public static String URLDecode(String src)
     {
         try
@@ -511,7 +516,7 @@ public class Utils
         }
         catch (Exception e) {}
         return null;
-    } 
+    }
 
     public static String getJarVersion()
     {
@@ -529,14 +534,14 @@ public class Utils
         {
             if (!urls[i].getPath().endsWith(".jar"))
                 continue;
-            
+
             try
             {
                 URL url = cl.findResource("META-INF/MANIFEST.MF");
                 Manifest mf = new Manifest(url.openStream());
                 if (mf == null)
                     continue;
-                
+
                 Map entries = mf.getMainAttributes();
                 Iterator itt = entries.keySet().iterator();
 
@@ -557,7 +562,7 @@ public class Utils
             }
             catch (Exception e) {}
         }
-        
+
         return DEFAULT_VERSION_STRING;
     }
 
@@ -605,7 +610,16 @@ public class Utils
             throw new IllegalStateException("Unable to UnGZIP bytes: "+e, e);
         }
     }
-    
+
+    public static String escapeHTMLSpecialCharacters(String str) {
+        str = str.replace("&", "&amp;");
+        str = str.replace("<", "&lt;");
+        str = str.replace(">", "&gt;");
+        str = str.replace("\"", "&quot;");
+        str = str.replace("'", "&#39;");
+        return str;
+    }
+
     public static String stackTraceString(Throwable t)
     {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -614,7 +628,9 @@ public class Utils
             tt.printStackTrace(ps);
         ps.close();
 
-        return Utils.toString(bout.toByteArray());
+        String stackTrace = toUTF8String(bout.toByteArray());
+        stackTrace = escapeHTMLSpecialCharacters(stackTrace);
+        return stackTrace;
     }
 
     public static void main(String[] args) throws Exception
