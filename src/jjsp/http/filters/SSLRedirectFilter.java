@@ -60,6 +60,8 @@ public class SSLRedirectFilter implements HTTPRequestFilter
     public HTTPFilterChain filterRequest(HTTPFilterChain chain, HTTPInputStream request, HTTPOutputStream response, ConnectionState state)
     {
         HTTPFilterChain myChain = new HTTPFilterChain(name, chain);
+
+        response.getHeaders().setHeader("Strict-Transport-Security", "max-age=3600; includeSubDomains");
         if (!request.isSecure())
         {
             try
