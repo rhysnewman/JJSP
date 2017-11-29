@@ -951,7 +951,7 @@ public class JJSPRuntime extends Environment
                 path = path.substring(pathPrefix.length());
             }
 
-            if (!validPaths.contains(path))
+            if (!validPaths.contains(path) && !validPaths.contains(checkLocalResourcePath(path)))
                 return false;
 
             byte[] content = getContentFor(path);

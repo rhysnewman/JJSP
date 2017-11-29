@@ -626,9 +626,12 @@ public class Environment extends ImageGenerator
 
     public boolean deleteLocal(String name)
     {
-        name = checkLocalResourcePath(name);
         synchronized (this)
         {
+            if (localContent.remove(name) != null)
+                return true;
+
+            name = checkLocalResourcePath(name);
             return localContent.remove(name) != null;
         }
     }
@@ -637,11 +640,14 @@ public class Environment extends ImageGenerator
     {
         if ((name == null) || (name.length() == 0))
             return null;
-        name = checkLocalResourcePath(name);
-        
+
         Object obj = null;
         synchronized (this)
         {
+            obj = localContent.get(name);
+            if (obj == null)
+                name = checkLocalResourcePath(name);
+
             obj = localContent.get(name);
             if (obj == null)
                 return null;
