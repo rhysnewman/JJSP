@@ -247,12 +247,9 @@ public class Engine
         return server;
     }
 
-    protected ServerSocketInfo getDefaultServerSocket(JJSPRuntime runtime) throws Exception
+    protected ServerSocketInfo getDefaultServerSocket(JJSPRuntime runtime)
     {
-        int port = Utils.getFreeSocket(null, JJSPRuntime.DEFAULT_PORT_BASE, JJSPRuntime.DEFAULT_PORT_BASE+128);
-        if (port < 0)
-            throw new IOException("No free port available for service (checked "+JJSPRuntime.DEFAULT_PORT_BASE+"..."+(JJSPRuntime.DEFAULT_PORT_BASE+128)+")");
-        return new ServerSocketInfo(port, false, null);
+        return null;
     }
 
     protected void serverListening(HTTPServer server, ServerSocketInfo socketInfo, Exception listenError) throws Exception {}
@@ -284,11 +281,24 @@ public class Engine
         return rt.getAndClearJJSPOutput();
     }
 
+    public ServerSocketInfo[] getDeclaredServerSocketInfo()
+    {
+        JJSPRuntime rt = getRuntime();
+        ServerSocketInfo[] ssInfo = rt.getServerSockets();
+        if ((ssInfo == null) || (ssInfo.length == 0))
+        {
+            ServerSocketInfo ss = getDefaultServerSocket(rt);
+            if (ss != null)
+                return new ServerSocketInfo[]{ss};
+
+            return new ServerSocketInfo[0];
+        }
+        return ssInfo;
+    }
+
     private boolean openServerPorts(JJSPRuntime jr) throws Exception
     {
-        ServerSocketInfo[] ssInfo = jr.getServerSockets();
-        if ((ssInfo == null) || (ssInfo.length == 0))
-            ssInfo = new ServerSocketInfo[]{getDefaultServerSocket(jr)};
+        ServerSocketInfo[] ssInfo = getDeclaredServerSocketInfo();
 
         boolean isListening = false;
         for (int p=0; p<ssInfo.length; p++)
@@ -359,7 +369,11 @@ public class Engine
                 launchComplete(server, jjspRuntime, isListening);
 
                 if (!isListening)
+                {
+                    if (getDeclaredServerSocketInfo().length > 0)
+                        runtimeError(new IllegalStateException("Failed to open required ports"));
                     stop();
+                }
                 else
                     launchOK = true;
             }
@@ -420,7 +434,11 @@ public class Engine
                 launchComplete(server, jjspRuntime, isListening);
 
                 if (!isListening)
+                {
+                    if (getDeclaredServerSocketInfo().length > 0)
+                        runtimeError(new IllegalStateException("Failed to open required ports "+Arrays.toString(getDeclaredServerSocketInfo())));
                     stop();
+                }
                 else
                     launchOK = true;
             }

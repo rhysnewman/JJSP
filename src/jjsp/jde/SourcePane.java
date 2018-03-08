@@ -495,13 +495,6 @@ public class SourcePane extends JDETextEditor
             return (logEntry) -> {logger.requestProcessed(logEntry); log.requestProcessed(logEntry);}; 
         }
 
-        protected ServerSocketInfo getDefaultServerSocket(JJSPRuntime runtime) throws Exception 
-        {
-            ServerSocketInfo result = super.getDefaultServerSocket(runtime);
-            println("No socket defined in source - using "+result);
-            return result;
-        }
-
         protected void serverListening(HTTPServer server, ServerSocketInfo socketInfo, Exception listenError) throws Exception
         {
             URI serviceRoot = null;
