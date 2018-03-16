@@ -1157,6 +1157,14 @@ public class JJSPRuntime extends Environment
         return new ErrorFilter(name, errorFilter, mainFilter);
     }
 
+    public NotFoundFilter create404Filter(String name, HTTPRequestFilter chain) {
+        return new NotFoundFilter(name, chain);
+    }
+
+    public NotFoundFilter create404Filter(String name, Function generate404Page, HTTPRequestFilter chain) {
+        return new NotFoundFilter(name, generate404Page, chain);
+    }
+
     public DirectoryFilter createDirectoryFilter(String directoryName, HTTPRequestFilter chain) throws IOException
     {
         return createDirectoryFilter(directoryName, null, chain);
