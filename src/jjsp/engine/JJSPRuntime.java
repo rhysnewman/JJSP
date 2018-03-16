@@ -167,7 +167,7 @@ public class JJSPRuntime extends Environment
                 if (scriptEngine == null)
                     scriptEngine = engineManager.getEngineByName("javascript");
             }
-            
+
             setupScriptVariables();
             scriptEngine.eval(jsSource);
 
@@ -186,7 +186,7 @@ public class JJSPRuntime extends Environment
     {
         if (!initialised())
             throw new IllegalStateException("JJSP Runtime not initialised");
-        
+
         ClassLoader currentLoader = Thread.currentThread().getContextClassLoader();
         try
         {
@@ -873,9 +873,12 @@ public class JJSPRuntime extends Environment
         return createCompressedStaticDataFilter(createStaticLocalFilter(name, fixedURI, contentType, localResourceName, cacheTimeSecs, chain));
     }
 
-    public ProxyFilter createProxyFilter(String name, String targetHost, int targetPort, HTTPRequestFilter chain)
-    {
-        return new ProxyFilter(name, targetHost, targetPort, chain);
+    public ProxyFilter createProxyFilter(String name, String host, HTTPRequestFilter chain) {
+        return new ProxyFilter(name, host, chain);
+    }
+
+    public ProxyFilter createProxyFilter(String name, Function hostFunc, Function htmlEditor, HTTPRequestFilter chain) {
+        return new ProxyFilter(name, hostFunc, htmlEditor, chain);
     }
 
     public class LocalFilter extends AbstractRequestFilter

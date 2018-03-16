@@ -1,50 +1,43 @@
-/*
-JJSP - Java and Javascript Server Pages 
-Copyright (C) 2016 Global Travel Ventures Ltd
-
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
-for more details.
-
-You should have received a copy of the GNU General Public License along with 
-this program. If not, see http://www.gnu.org/licenses/.
-*/
 package jjsp.http.filters;
-
-import java.io.*;
-import java.net.*;
-import java.util.*;
 
 import jjsp.http.*;
 
-public class ProxyFilter extends AbstractRequestFilter
-{
-    protected String hostString;
+import java.io.*;
+import java.net.HttpCookie;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.function.Function;
 
-    public ProxyFilter(String name, String targetHost, int targetPort, HTTPRequestFilter filterChain)
-    {
+public class ProxyFilter extends AbstractRequestFilter {
+    // getFullForwardPath: a lambda to create a complete url to be forwarded, from the requested proxy path
+    // htmlEditor: if not null, this lambda will edit all 'text/html' content before it's returned by the proxy
+    private Function getFullForwardPath, htmlEditor;
+
+    public ProxyFilter(String name, Function getFullForwardPath, Function htmlEditor, HTTPRequestFilter filterChain) {
         super(name, filterChain);
-        hostString = targetHost+":"+targetPort;
+        this.getFullForwardPath = getFullForwardPath;
+        this.htmlEditor = htmlEditor;
     }
 
-    protected boolean handleRequest(HTTPInputStream request, HTTPOutputStream response, ConnectionState state) throws IOException
-    {
-        HTTPRequestHeaders headers = request.getHeaders(); 
+    public ProxyFilter(String name, String host, HTTPRequestFilter filterChain) {
+        super(name, filterChain);
+        this.getFullForwardPath = (path) -> host + path;
+        this.htmlEditor = null;
+    }
+
+    @Override
+    protected boolean handleRequest(HTTPInputStream request, HTTPOutputStream response, ConnectionState state) throws IOException {
+        HTTPRequestHeaders headers = request.getHeaders();
         String path = headers.getRequestURL();
         if (!path.startsWith("/"))
             path = "/"+path;
-       
+
         if (!headers.isGet() && !headers.isHead() && !headers.isPost())
             return false;
         boolean isPost = headers.isPost();
 
-        URL url = new URL("http://"+hostString+path);
+        String urlString = (String) getFullForwardPath.apply(path);
+        URL url = new URL(urlString);
         HttpURLConnection proxy = (HttpURLConnection) url.openConnection();
 
         String[] keys = headers.getHeaderKeys();
@@ -53,7 +46,7 @@ public class ProxyFilter extends AbstractRequestFilter
             String value = headers.getHeader(keys[i]);
             proxy.setRequestProperty(keys[i], value);
         }
-        
+
         proxy.setUseCaches(false);
         if (isPost)
         {
@@ -65,14 +58,17 @@ public class ProxyFilter extends AbstractRequestFilter
             postOut.flush();
             postOut.close();
         }
-        
+
+        try {
+            proxy.connect();
+        }
+        catch ( Exception ex ) {
+            throw new IOException("Failed to forward traffic to " + urlString, ex);
+        }
+
         int respCode = proxy.getResponseCode();
         String msg = proxy.getResponseMessage();
-        long length = proxy.getContentLengthLong();
         boolean isChunked = false;
-
-        if (respCode != 200)
-            return false;
 
         HTTPResponseHeaders respHeaders = response.getHeaders();
         for (int i=0; true; i++)
@@ -95,53 +91,62 @@ public class ProxyFilter extends AbstractRequestFilter
             else
                 respHeaders.setHeader(key, value);
 
-            isChunked = key.equalsIgnoreCase("transfer-encoding") && value.equalsIgnoreCase("chunked");
+            if ( key.equalsIgnoreCase("transfer-encoding") ) {
+                if ( value.equalsIgnoreCase("chunked") )
+                    isChunked = true;
+            }
         }
 
-        InputStream data = null;
+        InputStream dataStream = null;
         try
         {
-            if ((length < 0) && isChunked)
-            {
-                respHeaders.configure(respCode, msg);
-                response.sendHeaders();
+            try {
+                dataStream = proxy.getInputStream();
+            }
+            catch ( IOException ex ) {
+                // HttpURLConnection.getInputStream will throw a FileNotFoundException if the response if not 200
+                // use the error stream to read any useful returned content (e.g. 404 page or 500 stack track) and forward to the client
+                dataStream = proxy.getErrorStream();
+            }
+
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            int nRead;
+            while ( ( nRead = dataStream.read(buffer, 0, buffer.length) ) != -1 )
+                bout.write(buffer, 0, nRead);
+            bout.flush();
+
+            byte[] data = bout.toByteArray();
+            String contentType = proxy.getContentType();
+            if ( htmlEditor != null && contentType.toLowerCase().contains("text/html") )
+                data = editHTML(data);
+
+            respHeaders.configure(respCode, msg);
+            if ( data.length > 0 ) {
+                response.prepareToSendContent(data.length, isChunked);
+                response.write(data);
             }
             else
-            {
-                data = proxy.getInputStream();
-                respHeaders.configure(respCode, msg);
-                
-                if ((length >= 0) && !isChunked)
-                    response.prepareToSendContent(length, false);
-                else
-                    response.prepareToSendContent(-1, true);
-                
-                byte[] buffer = new byte[4096];
-                while (true)
-                {
-                    int r = data.read(buffer);
-                    if (r < 0)
-                        break;
-                    response.write(buffer, 0, r);
-                }
-
-                response.close();
-                data.close();
-            }
-        }
-        catch (Exception e) 
-        {
-            return false;
+                response.sendHeaders();
         }
         finally
         {
             try
             {
-                data.close();
+                response.close();
+                if ( dataStream != null )
+                    dataStream.close();
             }
             catch (Exception e) {}
         }
 
         return true;
     }
+
+    private byte[] editHTML(byte[] data) {
+        String html = new String(data);
+        html = (String) htmlEditor.apply(html);
+        return html.getBytes();
+    }
+
 }
