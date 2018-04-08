@@ -37,6 +37,9 @@ public class ProxyFilter extends AbstractRequestFilter {
         boolean isPost = headers.isPost();
 
         String urlString = (String) getFullForwardPath.apply(path);
+        if ( urlString == null ) // if no forward path is found, return false to continue with the filter chain
+            return false;
+
         URL url = new URL(urlString);
         HttpURLConnection proxy = (HttpURLConnection) url.openConnection();
 
@@ -109,6 +112,12 @@ public class ProxyFilter extends AbstractRequestFilter {
                 dataStream = proxy.getErrorStream();
             }
 
+            respHeaders.configure(respCode, msg);
+            if ( dataStream == null ) {// send headers only if there is no content
+                response.sendHeaders();
+                return true;
+            }
+
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             byte[] buffer = new byte[4096];
             int nRead;
@@ -121,7 +130,6 @@ public class ProxyFilter extends AbstractRequestFilter {
             if ( htmlEditor != null && contentType.toLowerCase().contains("text/html") )
                 data = editHTML(data);
 
-            respHeaders.configure(respCode, msg);
             if ( data.length > 0 ) {
                 response.prepareToSendContent(data.length, isChunked);
                 response.write(data);

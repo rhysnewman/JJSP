@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.http;
@@ -24,7 +24,7 @@ import java.net.*;
 import jjsp.util.*;
 
 public class HTTPOutputStream extends OutputStream
-{   
+{
     private int serverPort;
     private OutputStream contentStream;
     private MeasurableOutputStream dest;
@@ -38,13 +38,13 @@ public class HTTPOutputStream extends OutputStream
         this.isSecure = isSecure;
         this.serverPort = serverPort;
         this.clientAddress = address;
-        
+
         outputSent = false;
         isDisposed = false;
         legacyHTTP = false;
         isResponseToHeadRequest = false;
         headers = new HTTPResponseHeaders();
-        contentStream = null; 
+        contentStream = null;
     }
 
     class MeasurableOutputStream extends OutputStream
@@ -87,13 +87,13 @@ public class HTTPOutputStream extends OutputStream
             dest.write(b);
             bytesWritten(b.length);
         }
-        
+
         public void write(byte[] b, int off, int len) throws IOException
         {
             dest.write(b, off, len);
             bytesWritten(len);
         }
-         
+
         public void write(int b) throws IOException
         {
             dest.write(b);
@@ -145,7 +145,7 @@ public class HTTPOutputStream extends OutputStream
     {
         isResponseToHeadRequest = value;
     }
-    
+
     public void setToLegacyHTTP()
     {
         legacyHTTP = true;
@@ -155,7 +155,7 @@ public class HTTPOutputStream extends OutputStream
     {
         return headers;
     }
-    
+
     public boolean outputSent()
     {
         return outputSent;
@@ -176,15 +176,15 @@ public class HTTPOutputStream extends OutputStream
         }
         catch (Exception e) {}
     }
-    
+
     public void sendServerErrorMessage(String headerMessage, Throwable t) throws IOException
     {
-        sendServerErrorMessage(headerMessage, Utils.stackTraceString(t));
+        sendServerErrorMessage(headerMessage, Utils.stackTraceString(t, false));
     }
-    
+
     public void sendServerErrorMessage(String headerMessage, String bodyContent) throws IOException
     {
-        headers.configureAsServerError("Internal Server Error "+ headerMessage);
+        headers.configureAsServerError(headerMessage);
         sendContent(bodyContent, "text/plain");
     }
 
@@ -271,7 +271,7 @@ public class HTTPOutputStream extends OutputStream
 
         if (contentEncoding != null)
             headers.setContentEncoding(contentEncoding);
-            
+
         if (content == null)
         {
             prepareToSendContent(0, false);
@@ -321,7 +321,7 @@ public class HTTPOutputStream extends OutputStream
             headers.configureToPreventCaching();
         if (!headers.contentTypeConfigured())
             headers.setContentType("text/html");
-        
+
         if (contentStream != null)
             contentStream.close();
         contentStream = null;
@@ -382,7 +382,7 @@ public class HTTPOutputStream extends OutputStream
         }
     }
 
-    public void write(byte[] b, int off, int len) throws IOException 
+    public void write(byte[] b, int off, int len) throws IOException
     {
         try
         {
@@ -422,7 +422,7 @@ public class HTTPOutputStream extends OutputStream
     {
         private boolean closed;
         private long pos, length;
-        
+
         FixedLengthOutputStream(long length)
         {
             pos = 0;
@@ -450,7 +450,7 @@ public class HTTPOutputStream extends OutputStream
             write(b, 0, b.length);
         }
 
-        public void write(byte[] b, int off, int len) throws IOException 
+        public void write(byte[] b, int off, int len) throws IOException
         {
             if (closed)
                 throw new EOFException("Stream closed");
@@ -463,11 +463,11 @@ public class HTTPOutputStream extends OutputStream
                 close();
                 throw new EOFException("Length limit reached");
             }
-            
+
             dest.write(b, off, toWrite);
             pos += toWrite;
         }
- 
+
         public void write(int b) throws IOException
         {
             if (closed)
@@ -518,7 +518,7 @@ public class HTTPOutputStream extends OutputStream
             write(b, 0, b.length);
         }
 
-        public void write(byte[] b, int off, int len) throws IOException 
+        public void write(byte[] b, int off, int len) throws IOException
         {
             if (closed)
                 throw new EOFException("Chunked output stream closed");
@@ -532,9 +532,9 @@ public class HTTPOutputStream extends OutputStream
             dest.write(b, off, toWrite);
             print("\r\n");
         }
- 
+
         public void write(int b) throws IOException
-        {  
+        {
             if (closed)
                 throw new EOFException("Chunked output stream closed");
 
@@ -569,14 +569,14 @@ public class HTTPOutputStream extends OutputStream
                 throw new EOFException();
         }
 
-        public void write(byte[] b, int off, int len) throws IOException 
+        public void write(byte[] b, int off, int len) throws IOException
         {
             if (closed)
                 throw new EOFException();
         }
- 
+
         public void write(int b) throws IOException
-        {  
+        {
             if (closed)
                 throw new EOFException();
         }

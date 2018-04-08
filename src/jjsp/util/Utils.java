@@ -620,7 +620,7 @@ public class Utils
         return str;
     }
 
-    public static String stackTraceString(Throwable t)
+    public static String stackTraceString(Throwable t, boolean escape)
     {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintStream ps = new PrintStream(bout);
@@ -629,7 +629,8 @@ public class Utils
         ps.close();
 
         String stackTrace = toUTF8String(bout.toByteArray());
-        stackTrace = escapeHTMLSpecialCharacters(stackTrace);
+        if ( escape )
+            stackTrace = escapeHTMLSpecialCharacters(stackTrace);
         return stackTrace;
     }
 

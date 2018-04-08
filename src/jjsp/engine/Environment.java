@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 
@@ -37,7 +37,7 @@ public class Environment extends ImageGenerator
     public static final String LIB = "lib/";
     public static final String SERVICES = "services/";
     public static final String CACHE_DIR = "jjspcache/";
-    
+
     private static final String LIB_PATH = LIB;
     private static final String SERVICES_PATH = LIB+SERVICES;
 
@@ -116,13 +116,13 @@ public class Environment extends ImageGenerator
         resourcePathRoots.add(rootURI);
         if (initialResourceURI != null)
             resourcePathRoots.add(initialResourceURI);
-            
+
         registeredDataInfoIndices = new TreeMap();
     }
 
-    private static void clearSunJarFileFactoryCache() 
+    private static void clearSunJarFileFactoryCache()
     {
-        try 
+        try
         {
             Class jarFileFactory = Class.forName("sun.net.www.protocol.jar.JarFileFactory");
 
@@ -188,7 +188,7 @@ public class Environment extends ImageGenerator
     {
         return getRootURI().resolve(LIB);
     }
-    
+
     public URI getServicesURI()
     {
         return getRootURI().resolve(LIB).resolve(SERVICES);
@@ -228,14 +228,14 @@ public class Environment extends ImageGenerator
     }
 
     public synchronized void addResourcePathRoot(String resourceRoot)
-    {      
+    {
         addResourcePathRoot(getRootURI().resolve(resourceRoot));
     }
 
     public synchronized void addResourcePathRoot(URI resourceRoot)
-    {        
+    {
         // Note: deliberately allow duplicates!
-        // When roots are added by an include/parse statement,you want to be able to "pop" 
+        // When roots are added by an include/parse statement,you want to be able to "pop"
         // them off with removeResourcePathRoot and not inadvertently delete a version that needs to be there (from before your call).
         checkModifyResourcePaths();
 
@@ -247,7 +247,7 @@ public class Environment extends ImageGenerator
     }
 
     public synchronized boolean removeResourcePathRoot(URI absoluteURI)
-    {        
+    {
         checkModifyResourcePaths();
         if (absoluteURI == null)
             return false;
@@ -292,7 +292,7 @@ public class Environment extends ImageGenerator
 
         File libFile = new File(libDir, name);
         libFile.createNewFile();
-        
+
         FileOutputStream fout = new FileOutputStream(libFile);
         fout.write(jarBytes);
         fout.close();
@@ -300,13 +300,13 @@ public class Environment extends ImageGenerator
 
     public void addServiceFile(String serviceName, String fileName, byte[] data) throws IOException
     {
-        URI svcDirURI = getServiceURI(serviceName); 
+        URI svcDirURI = getServiceURI(serviceName);
         if (svcDirURI == null)
             throw new IOException("Service '"+serviceName+"' not found");
 
         File svcFile = new File(new File(svcDirURI), fileName);
         svcFile.createNewFile();
-        
+
         FileOutputStream fout = new FileOutputStream(svcFile);
         fout.write(data);
         fout.close();
@@ -322,7 +322,7 @@ public class Environment extends ImageGenerator
         HashSet jjspLoaderUrls = new HashSet();
         try
         {
-            URL[] urls = ((URLClassLoader) getClass().getClassLoader()).getURLs(); 
+            URL[] urls = ((URLClassLoader) getClass().getClassLoader()).getURLs();
             for (int i=0; i<urls.length; i++)
                 jjspLoaderUrls.add(urls[i]);
         }
@@ -372,7 +372,7 @@ public class Environment extends ImageGenerator
     {
         String indent = "    ";
         StringBuffer buffer = new StringBuffer();
-        
+
         while (cl != null)
         {
             buffer.append(indent+"ClassLoader: "+cl+"\n");
@@ -398,7 +398,7 @@ public class Environment extends ImageGenerator
         URL[] jarList1 = svcLoader.getURLs();
         URL[] jarList2 = libLoader.getURLs();
         LinkedHashSet ll = new LinkedHashSet();
-        
+
         for (int i=0; i<jarList2.length; i++)
             ll.add(jarList2[i]);
         for (int i=0; i<jarList1.length; i++)
@@ -406,7 +406,7 @@ public class Environment extends ImageGenerator
 
         URL[] fullList = new URL[ll.size()];
         ll.toArray(fullList);
-        
+
         return recordClassLoader(new URLClassLoader(fullList, getClass().getClassLoader()));
     }
 
@@ -426,7 +426,7 @@ public class Environment extends ImageGenerator
         if (!serviceExists(serviceName))
             throw new IOException("Service '"+serviceName+"' not found");
 
-        URI svcURI = getServiceURI(serviceName); 
+        URI svcURI = getServiceURI(serviceName);
         result = createClassLoaderFromDirURI(svcURI, getLibraryLoader());
 
         URLClassLoader ll;
@@ -443,13 +443,13 @@ public class Environment extends ImageGenerator
         result.close();
         return ll;
     }
-    
+
     public URLClassLoader createServiceLoader(String serviceName) throws IOException
     {
         if (!serviceExists(serviceName))
             throw new IOException("Service '"+serviceName+"' not found");
 
-        URI svcURI = getServiceURI(serviceName); 
+        URI svcURI = getServiceURI(serviceName);
         return recordClassLoader(createClassLoaderFromDirURI(svcURI, getLibraryLoader()));
     }
 
@@ -475,7 +475,7 @@ public class Environment extends ImageGenerator
         public final byte[] data;
         public final long loadTime;
         public final URI resolvedURI;
-        
+
         public URIContent(URI uri, byte[] raw)
         {
             data = raw;
@@ -508,7 +508,7 @@ public class Environment extends ImageGenerator
             }
         }
         catch (Exception e) {buf.append(path+"; ");}
-                    
+
         Iterator itt = null;
         synchronized (this)
         {
@@ -554,7 +554,7 @@ public class Environment extends ImageGenerator
         path = checkLocalResourcePath(path);
         if (contents == null)
             throw new IllegalArgumentException("Null contents for path '"+path+"'");
-        
+
         String message = "";
         if (contents instanceof BufferedImage)
         {
@@ -562,7 +562,7 @@ public class Environment extends ImageGenerator
             int dot = path.lastIndexOf(".");
             if (dot > 0)
                 ext = path.substring(dot+1).toUpperCase();
-            
+
             contents = getImageBytes((BufferedImage) contents, ext);
             message = "Local image on: '"+path+"'";
         }
@@ -606,7 +606,7 @@ public class Environment extends ImageGenerator
             else if (!uri.getScheme().startsWith("http"))
                 throw new IOException("Unknown URI scheme: '"+uri+"'");
         }
-        
+
         synchronized (this)
         {
             localContent.put(path, contents);
@@ -737,7 +737,7 @@ public class Environment extends ImageGenerator
         globMatch = globMatch.replace("*.*", "*");
         globMatch = globMatch.replace("**", "*");
         globMatch = globMatch.replace("\\", "/");
-            
+
         while (globMatch.startsWith("/"))
             globMatch = globMatch.substring(1);
 
@@ -764,7 +764,7 @@ public class Environment extends ImageGenerator
         {
             itt = resourcePathRoots.iterator();
         }
-        
+
         while (itt.hasNext())
         {
             URI uri = (URI) itt.next();
@@ -775,7 +775,7 @@ public class Environment extends ImageGenerator
                 File srcDir = new File(uri.resolve(prefix));
                 if (!srcDir.exists() || !srcDir.isDirectory())
                     continue;
-                
+
                 String startsWith = srcDir.getAbsolutePath().replace("\\", "/");
                 if (!startsWith.endsWith("/") && srcDir.isDirectory())
                     startsWith = startsWith+"/";
@@ -803,7 +803,7 @@ public class Environment extends ImageGenerator
         {
             loadResult = loadFromResourcePath(remotePath);
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             if (ignoreIfNotFound)
                 return "Zip data '"+remotePath+"' not found";
@@ -856,18 +856,18 @@ public class Environment extends ImageGenerator
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         ZipOutputStream zout = new ZipOutputStream(bout);
         FileTime created = FileTime.fromMillis(System.currentTimeMillis());
-        
+
         String[] paths = listLocal();
         for (int i=0; i<paths.length; i++)
         {
             byte[] content = getLocal(paths[i]);
             if (content == null)
                 throw new IOException("Failed to get content for path "+paths[i]);
-            
+
             String zipPath = paths[i];
             if (zipPath.startsWith("/"))
                 zipPath = zipPath.substring(1);
-            
+
             ZipEntry entry = new ZipEntry(zipPath);
             entry.setCreationTime(created);
             entry.setSize(content.length);
@@ -886,7 +886,7 @@ public class Environment extends ImageGenerator
     {
         if (!serviceExists(serviceName))
             throw new IOException("No service '"+serviceName+"' found");
-        
+
         String outputPath = SERVICES_PATH+serviceName+"/";
         outputPath = checkLocalResourcePath(outputPath);
 
@@ -894,7 +894,7 @@ public class Environment extends ImageGenerator
         String[] paths = listServiceResourcePaths(serviceName);
         for (int i=0; i<paths.length; i++)
             putLocal(checkLocalResourcePath(outputPath+paths[i]), serviceURI.resolve(paths[i]));
-        
+
         return "Local store loaded service '"+serviceName+"' to '"+outputPath+"'\n";
     }
 
@@ -912,7 +912,7 @@ public class Environment extends ImageGenerator
         {
             if (!paths[i].equalsIgnoreCase(libName))
                 continue;
-            
+
             putLocal(checkLocalResourcePath(outputPath), libURI.resolve(paths[i]));
             return "Local store loaded library  '"+libName+"' to '"+outputPath+"'\n";
         }
@@ -933,7 +933,7 @@ public class Environment extends ImageGenerator
             File[] ff = new File(dirURI).listFiles();
             if (ff == null)
                 return new String[0];
-                
+
             for (int i=0; i<ff.length; i++)
                 buf.add(ff[i].getName());
         }
@@ -968,7 +968,7 @@ public class Environment extends ImageGenerator
             root = new File(rootURI);
         }
         catch (Exception e) {}
-        
+
         File dir = new File(root, dirPath);
         if (!dir.exists() || !dir.isDirectory())
             return new String[0];
@@ -976,7 +976,7 @@ public class Environment extends ImageGenerator
         File[] ff = dir.listFiles();
         if (ff == null)
             return new String[0];
-                
+
         String[] result = new String[ff.length];
         for (int i=0; i<ff.length; i++)
             result[i] = ff[i].getName();
@@ -1055,7 +1055,7 @@ public class Environment extends ImageGenerator
             }
             catch (Exception e) {}
         }
-        
+
         URL[] urls = new URL[ll.size()];
         ll.toArray(urls);
         return urls;
@@ -1108,7 +1108,7 @@ public class Environment extends ImageGenerator
     {
         return Utils.gzip(uncompressed);
     }
-    
+
     public byte[] unzip(byte[] compressed)
     {
         return Utils.fromGzip(compressed);
@@ -1133,7 +1133,7 @@ public class Environment extends ImageGenerator
                 newValue = replacementMap.get(key).toString();
             }
             catch (Exception e) {}
-            
+
             int pos = 0;
             while (true)
             {
@@ -1168,7 +1168,7 @@ public class Environment extends ImageGenerator
             return result;
 
         result = new HTTPDataInfoIndex(urlStem);
-        
+
         if ((staleReadTimeLimit > 0) || allowStaleReadsWhenDisconnected)
         {
             File tempDir = getLocalCacheDir();
@@ -1187,7 +1187,7 @@ public class Environment extends ImageGenerator
     {
         if (t == null)
             return "<<NULL EXCEPTION OBJECT>>";
-        
+
         if (t instanceof Throwable)
             return toString((Throwable) t);
 
@@ -1204,7 +1204,7 @@ public class Environment extends ImageGenerator
             return "NativeJSError "+t+" line "+line+" (col "+columnNumber+") in "+fileName+"\n"+stack;
         }
         catch (Throwable tt) {}
-        
+
         return "[Unknown Exception Class] "+t;
     }
 
@@ -1269,7 +1269,7 @@ public class Environment extends ImageGenerator
         path = path.replace("'", "%27");
         path = path.replace("(", "%28");
         path = path.replace(")", "%29");
-            
+
         return path;
     }
 
@@ -1295,20 +1295,20 @@ public class Environment extends ImageGenerator
         return buf.toString();
     }
 
-    private URLClassLoader recordClassLoader(URLClassLoader cl) 
+    private URLClassLoader recordClassLoader(URLClassLoader cl)
     {
-        synchronized (this) 
+        synchronized (this)
         {
             ourClassLoaders.add(cl);
         }
         return cl;
     }
 
-    void closeEnvironment() throws IOException 
+    void closeEnvironment() throws IOException
     {
-        synchronized (this) 
+        synchronized (this)
         {
-            for (Object ourClassLoaderObj : ourClassLoaders) 
+            for (Object ourClassLoaderObj : ourClassLoaders)
             {
                 URLClassLoader cl = (URLClassLoader) ourClassLoaderObj;
                 cl.close();
@@ -1318,7 +1318,7 @@ public class Environment extends ImageGenerator
 
     public static String toString(Throwable t)
     {
-        return Utils.stackTraceString(t);
+        return Utils.stackTraceString(t, false);
     }
 
 }
