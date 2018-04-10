@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.jde;
@@ -53,13 +53,13 @@ public class SourcePane extends JDETextEditor
     private SplitPane mainSplit;
     private BorderPane leftPane;
     private ColouredSearchableTextOutput jjspEngineOutput;
-    
+
     private int errorLine;
     private String argList;
     private String siteOutput;
     private String statusMessage;
     private Throwable currentError;
-    
+
     private HTTPLogView log;
     private JDEEngine jjspEngine;
     private LocalStoreView localStoreView;
@@ -74,7 +74,7 @@ public class SourcePane extends JDETextEditor
     class ColouredSearchableTextOutput extends JDETextEditor
     {
         ColouredTextArea output;
-            
+
         ColouredSearchableTextOutput()
         {
             super(null, null, false);
@@ -83,16 +83,16 @@ public class SourcePane extends JDETextEditor
         protected void init(SharedTextEditorState sharedState)
         {
             super.init(sharedState);
-            
+
             editor = new ColouredTextArea(EDITOR_TEXT_SIZE);
             editor.setColours(Color.web("#007C29"));
             editor.setMinHeight(50);
-            
+
             setCenter(editor);
             output = (ColouredTextArea) editor;
         }
     }
-    
+
     protected void showSearchBox()
     {
         super.showSearchBox();
@@ -104,7 +104,7 @@ public class SourcePane extends JDETextEditor
         super.hideSearchBox();
         jjspEngineOutput.hideSearchBox();
     }
-    
+
     protected synchronized void init(SharedTextEditorState sharedState)
     {
         if (getURI().toString().endsWith(".jjsp") || getURI().toString().endsWith(".jet"))
@@ -147,19 +147,19 @@ public class SourcePane extends JDETextEditor
         TabPane tabs = new TabPane();
         tabs.setSide(Side.BOTTOM);
         tabs.getTabs().addAll(tab1, tab2, tab3);
-        tabs.setOnMousePressed((evt) -> 
+        tabs.setOnMousePressed((evt) ->
                           {
                               Tab tt = tabs.getSelectionModel().getSelectedItem();
                               if (tt != null)
                                   ((Node) tt.getContent()).requestFocus();
                           });
-        
+
         mainSplit = new SplitPane();
         mainSplit.setOrientation(Orientation.VERTICAL);
         mainSplit.getItems().addAll(leftPane, tabs);
         mainSplit.setDividerPosition(0, 0.66);
         setCenter(mainSplit);
-        
+
         clearStatus();
         appendStatus("Ready: "+new Date(), null);
         loadFromURI();
@@ -180,7 +180,7 @@ public class SourcePane extends JDETextEditor
         MenuItem compile = new MenuItem("Compile + Run");
         compile.setAccelerator(new KeyCodeCombination(KeyCode.F5));
         compile.setOnAction((evt)-> compile());
-        
+
         MenuItem reparse = new MenuItem("Reparse JJSP");
         reparse.setAccelerator(new KeyCodeCombination(KeyCode.F4));
         reparse.setOnAction((evt)-> reparseJJSP());
@@ -189,8 +189,8 @@ public class SourcePane extends JDETextEditor
         stop.setOnAction((evt)-> stop());
 
         MenuItem saveArchive = new MenuItem("Save Local Content in ZIP Archive");
-        saveArchive.setOnAction((evt)-> 
-                            { 
+        saveArchive.setOnAction((evt)->
+                            {
                                 if ((jjspEngine == null) || (jjspEngine.getRuntime() == null))
                                 {
                                     clearStatus();
@@ -203,7 +203,7 @@ public class SourcePane extends JDETextEditor
                                 zfc.setInitialDirectory(fc1.getInitialDirectory());
                                 zfc.setTitle("Save Local Content as ZIP Archive");
                                 zfc.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("ZIP Archive", "*.zip"));
-                                
+
                                 File file = zfc.showSaveDialog(getScene().getWindow());
                                 if (file != null)
                                 {
@@ -214,7 +214,7 @@ public class SourcePane extends JDETextEditor
                                         fout.write(archiveBytes);
                                         fout.close();
                                     }
-                                    catch (Exception e) 
+                                    catch (Exception e)
                                     {
                                         clearStatus();
                                         appendStatus("Error saving Local content as ZIP Output", e);
@@ -224,30 +224,30 @@ public class SourcePane extends JDETextEditor
 
         MenuItem clearHTTPLog = new MenuItem("Clear HTTP Log");
         clearHTTPLog.setOnAction((evt)-> log.clear());
-        
+
         MenuItem extraArgs = new MenuItem("Runtime Args");
         extraArgs.setOnAction((evt)-> showArgsPopup());
 
         Menu[] mm = super.createMenus();
         mm[0].setText("JJSP Actions");
-        mm[0].getItems().addAll(new SeparatorMenuItem(), compile, reparse, new SeparatorMenuItem(), stop, new SeparatorMenuItem(), extraArgs, new SeparatorMenuItem(), saveArchive, clearHTTPLog);   
+        mm[0].getItems().addAll(new SeparatorMenuItem(), compile, reparse, new SeparatorMenuItem(), stop, new SeparatorMenuItem(), extraArgs, new SeparatorMenuItem(), saveArchive, clearHTTPLog);
 
         CheckMenuItem showTranslation = new CheckMenuItem("Show JJSP Script Translation");
         showTranslation.setSelected(mainSplit.getItems().get(0) != leftPane);
-        showTranslation.setOnAction((evt)-> 
-                               { 
+        showTranslation.setOnAction((evt)->
+                               {
                                    double pos = mainSplit.getDividerPositions()[0];
-                                   
+
                                    mainSplit.getItems().set(0, new BorderPane());
-                                   if (showTranslation.isSelected()) 
+                                   if (showTranslation.isSelected())
                                    {
                                        SplitPane hSplit = new SplitPane();
                                        hSplit.setOrientation(Orientation.HORIZONTAL);
                                        hSplit.getItems().addAll(leftPane, ((JDEditor) editor).translatedJJSP);
                                        hSplit.setDividerPosition(0, 0.66);
                                        mainSplit.getItems().set(0, hSplit);
-                                   } 
-                                   else 
+                                   }
+                                   else
                                        mainSplit.getItems().set(0, leftPane);
                                    mainSplit.setDividerPosition(0, pos);
                                });
@@ -273,8 +273,8 @@ public class SourcePane extends JDETextEditor
     {
         return currentError != null;
     }
-    
-    public void clearError() 
+
+    public void clearError()
     {
         if (isShowingError())
         {
@@ -289,7 +289,7 @@ public class SourcePane extends JDETextEditor
         {
             if (tt instanceof ScriptException)
                 return ((ScriptException) tt).getLineNumber();
-        
+
             int result = -1;
             StackTraceElement[] ss = tt.getStackTrace();
             for (int i=0; i<ss.length; i++)
@@ -303,7 +303,7 @@ public class SourcePane extends JDETextEditor
                 else if (s.getFileName().startsWith(JJSPRuntime.TOP_LEVEL_SOURCE_PATH))
                     result = s.getLineNumber();
             }
-            
+
             if (result != -1)
                 return result;
         }
@@ -317,7 +317,7 @@ public class SourcePane extends JDETextEditor
         statusMessage = "";
         jjspEngineOutput.output.setText("");
     }
-    
+
     public void appendStatus(String message, Throwable t)
     {
         Throwable mainCause = t;
@@ -356,7 +356,7 @@ public class SourcePane extends JDETextEditor
 
             buf.append(outLine+"\n");
         }
-        
+
         statusMessage = buf.toString();
         //statusMessage += message; //an alternative if cleansing multiple blank lines isn't wanted
         currentError = mainCause;
@@ -385,7 +385,7 @@ public class SourcePane extends JDETextEditor
         if ((text == null) || (text.length() == 0))
             return;
         statusMessage += text;
-        
+
         jjspEngineOutput.output.setText("");
         jjspEngineOutput.output.appendColouredText(statusMessage, Color.web("#660033"));
         jjspEngineOutput.output.setScrollBarPosition(100.0);
@@ -407,7 +407,7 @@ public class SourcePane extends JDETextEditor
             return ((JDEditor) editor).setErrorLine(line);
         return -1;
     }
-        
+
     public double setSourceAndPosition(String jsSrc, int line, double scrollBarPos)
     {
         String editMessage = "<< Source edited since last compilation >>\n";
@@ -451,7 +451,7 @@ public class SourcePane extends JDETextEditor
             resultURIs = new ArrayList();
             error = null;
         }
-        
+
         protected void compile(JJSPRuntime runtime, String jsSrc) throws Exception
         {
             Date startTime = new Date();
@@ -480,7 +480,7 @@ public class SourcePane extends JDETextEditor
                 println(new Date(lr.getMillis())+" "+lr.getLevel()+" "+lr.getSourceClassName()+"  "+lr.getSourceMethodName()+"  "+lr.getMessage());
             }
         }
-        
+
         protected Logger getLogger()
         {
             return new JDELogger();
@@ -492,7 +492,7 @@ public class SourcePane extends JDETextEditor
             if (logger == null)
                 return log;
 
-            return (logEntry) -> {logger.requestProcessed(logEntry); log.requestProcessed(logEntry);}; 
+            return (logEntry) -> {logger.requestProcessed(logEntry); log.requestProcessed(logEntry);};
         }
 
         protected void serverListening(HTTPServer server, ServerSocketInfo socketInfo, Exception listenError) throws Exception
@@ -504,13 +504,13 @@ public class SourcePane extends JDETextEditor
                 if (socketInfo.port == 443)
                     serviceRoot = new URI("https://localhost/");
             }
-            else 
+            else
             {
                 serviceRoot = new URI("http://localhost:"+socketInfo.port+"/");
                 if (socketInfo.port == 80)
                     serviceRoot = new URI("http://localhost/");
             }
-                
+
             println(new Date()+"  Server Listening on "+socketInfo);
             resultURIs.add(serviceRoot);
 
@@ -531,7 +531,7 @@ public class SourcePane extends JDETextEditor
                     URL sitemapURL = serviceRoot.resolve("/sitemap.xml").toURL();
                     URLConnection conn = sitemapURL.openConnection();
                     conn.setRequestProperty("User-Agent", "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)");
-                    
+
                     String sitemapXML = Utils.loadText(conn.getInputStream());
                     //System.out.println(sitemapXML);
 
@@ -551,36 +551,36 @@ public class SourcePane extends JDETextEditor
                         url = url.replace("\r", "");
                         url = url.replace("\t", "");
                         url = url.replace(" ", "");
-                        
+
                         URI uri = new URI(url);
                         uri = serviceRoot.resolve(uri.getPath());
                         resultURIs.add(uri);
                     }
                 }
-                catch (Exception e) 
-                { 
+                catch (Exception e)
+                {
                     println("No sitemap.xml found ("+e.getMessage()+")");
                 }
             }
         }
-        
-        protected synchronized void runtimeError(Throwable t) 
+
+        protected synchronized void runtimeError(Throwable t)
         {
             println("\n\nJJSP Error: "+t.getMessage());
             error = t;
         }
-        
+
         protected void launchComplete(HTTPServer server, JJSPRuntime runtime, boolean isListening) throws Exception
         {
             URI[] uris = new URI[resultURIs.size()];
             resultURIs.toArray(uris);
             generatedOutputs = uris;
             println(new Date()+" JJSP Server Started");
-            
+
             Platform.runLater(() -> localStoreView.setEnvironment(runtime));
         }
 
-        protected void engineStopped() 
+        protected void engineStopped()
         {
             generatedOutputs = null;
             super.engineStopped();
@@ -640,13 +640,13 @@ public class SourcePane extends JDETextEditor
                 jjspEngine.start();
             }
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             appendStatus("Failed to create JJSP Engine", e);
         }
     }
 
-    public synchronized void setDisplayed(boolean isShowing) 
+    public synchronized void setDisplayed(boolean isShowing)
     {
         super.setDisplayed(isShowing);
 
@@ -670,7 +670,7 @@ public class SourcePane extends JDETextEditor
     class JDEditor extends Editor
     {
         TextEditor translatedJJSP;
-        
+
         JDEditor()
         {
             super(EDITOR_TEXT_SIZE);
@@ -688,13 +688,13 @@ public class SourcePane extends JDETextEditor
             double scrollBarPos = getScrollBarPosition();
             setSourceAndPosition(compiledJJSP, getCurrentLine(), scrollBarPos);
         }
-        
+
         public void requestFocus()
         {
             refreshView();
             super.requestFocus();
         }
-        
+
         public void refreshView()
         {
             super.refreshView();
@@ -702,26 +702,26 @@ public class SourcePane extends JDETextEditor
                 translatedJJSP.refreshView();
         }
 
-        public void setDisplayed(boolean isShowing) 
+        public void setDisplayed(boolean isShowing)
         {
             super.setDisplayed(isShowing);
             if (translatedJJSP != null)
                 translatedJJSP.setIsShowing(isShowing);
         }
 
-        protected void contentChanged() 
+        protected void contentChanged()
         {
             if (translatedJJSP != null)
                 translateJJSP();
         }
-        
-        protected void caretPositioned(int line, int charPos) 
+
+        protected void caretPositioned(int line, int charPos)
         {
             if (translatedJJSP != null)
                 translatedJJSP.highlightLine(line);
         }
 
-        protected void textScrolled(double scrollPosition) 
+        protected void textScrolled(double scrollPosition)
         {
             if (translatedJJSP != null)
                 translatedJJSP.setScrollBarPosition(scrollPosition);
@@ -747,7 +747,7 @@ public class SourcePane extends JDETextEditor
             translatedJJSP.setText(jsSrc);
             translatedJJSP.setScrollBarPosition(scrollBarPos);
             translatedJJSP.highlightLine(line);
-            
+
             int lineStatus = translatedJJSP.lineInViewport(line);
             if (lineStatus != 0)
                 translatedJJSP.scrollToLine(line);
@@ -766,8 +766,8 @@ public class SourcePane extends JDETextEditor
     {
         Environment jjspEnv = JDE.getEnvironment();
         Map args = jjspEnv.getArgs();
-        args.put("jde", "true");
-        
+        args.put("jde", null);
+
         return Args.toArgString(args);
     }
 
@@ -776,25 +776,25 @@ public class SourcePane extends JDETextEditor
         Stage dialogStage = new Stage();
         dialogStage.initModality(Modality.WINDOW_MODAL);
         Button ok = new Button("OK");
-        
+
         TextField argField = new TextField(argList);
         argField.setOnAction((evt) -> ok.fire());
         argField.setPrefWidth(350);
 
         Button reset = new Button("Reset");
         reset.setOnAction((evt) -> { argList = getDefaultArgs(); argField.setText(argList); });
-        
+
         GridPane gp = new GridPane();
         gp.setHgap(10);
         gp.setVgap(10);
-            
+
         gp.add(new Label("Define JJSP Args"), 0, 0);
         gp.add(argField, 1, 0);
 
-        ok.setOnAction((evt) -> 
-                       { 
+        ok.setOnAction((evt) ->
+                       {
                            argList = argField.getText();
-                           dialogStage.close(); 
+                           dialogStage.close();
                        });
 
         Button cancel = new Button("Cancel");
@@ -804,12 +804,12 @@ public class SourcePane extends JDETextEditor
         BorderPane.setMargin(hBox, new Insets(10,0,0,0));
         hBox.setAlignment(Pos.BASELINE_CENTER);
         hBox.getChildren().addAll(reset, cancel, ok);
-            
+
         BorderPane bp = new BorderPane();
         bp.setStyle("-fx-font-size: 16px; -fx-padding:10px");
         bp.setCenter(gp);
         bp.setBottom(hBox);
-            
+
         dialogStage.setTitle("JJSP Runtime Arguments");
         dialogStage.setScene(new Scene(bp));
         if (ImageIconCache.getJJSPImage() != null)
