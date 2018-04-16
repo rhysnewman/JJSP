@@ -50,7 +50,7 @@ public class ErrorFilter extends AbstractRequestFilter
 
         response.getHeaders().configureAsServerError("Error processing: "+request.getHeaders().getRequestURL());
 
-        String stackTrace = Utils.stackTraceString(error);
+        String stackTrace = Utils.stackTraceString(error, true);
 
         String html = "<HTML><BODY>\n<h1>Server Error for HTTP URL: '" + Utils.escapeHTMLSpecialCharacters(request.getHeaders().getRequestURL()) + "'</h1>";
         html += "<hr><pre>\n";

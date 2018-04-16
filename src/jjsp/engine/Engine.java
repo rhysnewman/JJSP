@@ -19,22 +19,17 @@ package jjsp.engine;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.*;
-import java.awt.image.*;
-import java.lang.reflect.*;
-
-import javax.imageio.*;
-import javax.script.*;
-
-import jdk.nashorn.api.scripting.*;
 
 import jjsp.http.*;
 import jjsp.util.*;
-import jjsp.http.filters.*;
 
 public class Engine
 {
+    public static final String LOG_DIR = "logs/";
+
     private final Map args;
     private final String jsSrc;
     private final File localCacheDir;
@@ -78,7 +73,7 @@ public class Engine
             throw new IllegalStateException("Engine not yet finished starting");
         if (restarting)
             throw new IllegalStateException("Engine already restarting");
-        
+
         restarting = true;
         new Thread(new Restarter()).start();
     }
@@ -88,7 +83,7 @@ public class Engine
         return started;
     }
 
-    public synchronized boolean isRunning() 
+    public synchronized boolean isRunning()
     {
         return running;
     }
@@ -122,7 +117,7 @@ public class Engine
             notifyAll();
         }
 
-        stopInternal();        
+        stopInternal();
     }
 
     private void stopInternal()
@@ -260,7 +255,7 @@ public class Engine
             getRuntime().println("Engine Running (Listening) "+new Date());
     }
 
-    protected void runtimeError(Throwable t) 
+    protected void runtimeError(Throwable t)
     {
         printStackTrace(t);
     }
@@ -333,13 +328,13 @@ public class Engine
 
             serverListening(server, info, listenError);
         }
-        
+
         return isListening;
     }
 
     class Restarter implements Runnable
     {
-        public void run() 
+        public void run()
         {
             boolean launchOK = false;
             try
@@ -515,7 +510,7 @@ public class Engine
 
     public static void main(String[] argList) throws Exception
     {
-        Map args = Args.parse(argList);
+        Map<String, String> args = Args.parse(argList);
         String fileName = Args.getArg("src", null);
 
         if ((argList.length == 0) || (fileName == null))
@@ -525,7 +520,7 @@ public class Engine
             System.out.println("        src file   : The main JJSP source file name (required)");
             System.out.println("        root       : The directory name of the JJSP root, defaults to the current working directory.");
             System.out.println("        cache      : The directory name of the JJSP file cache directory, defaults to 'jjspcache' in the process working directory.");
-            System.out.println("        logDir     : The log directory name relative to the current working directory (defaults to 'logs')");
+            System.out.println("        logdir     : The log directory name relative to the current working directory (defaults to 'logs')");
             System.out.println("        nogui      : Specify that JJSP should run as a headless (server only) mode and not launch the JDE");
             System.out.println("        server     : Synonym for 'nogui' above");
             System.out.println("   ");
@@ -536,34 +531,37 @@ public class Engine
                 throw new NullPointerException("No JJSP Source file specified; use -src option");
             return;
         }
+        args.putIfAbsent("mode", "production");
 
         String cwd = System.getProperty("user.dir");
+
+        // find root directory
         String rootDirName = Args.getArg("root", cwd);
-        String cacheDirName = Args.getArg("cache", new File(cwd, Environment.CACHE_DIR).getAbsolutePath());
-        String logDir = Args.getArg("logDir", new File(cwd, "logs").getAbsolutePath());
-
-        System.out.println("\nLogging output to log directory "+logDir+"\n");
-        Log.set(logDir);
-        Logger log = Logger.getGlobal();
-
-        args.remove("src");
-        args.remove("root");
-        args.remove("cache");
-        args.remove("logDir");
-        if (args.get("mode") == null)
-            args.put("mode", "production");
-
-        //System.out.println(jjspArgs);
-        File srcFile = new File(fileName);
-        if (!srcFile.exists() || !srcFile.isFile())
-            throw new IllegalStateException("Source file '"+srcFile+"' not found");
-
+        args.putIfAbsent("root", rootDirName);
         File rootDir = new File(rootDirName);
         if (!rootDir.exists() || !rootDir.isDirectory())
             throw new IllegalStateException("Root directory '"+rootDir+"' not found");
-        File cacheDir = new File(cacheDirName);
+
+        // set jjsp cache directory
+        String cacheDirPath = Paths.get(rootDirName, Environment.CACHE_DIR).toAbsolutePath().toString();
+        cacheDirPath = Args.getArg("cache", cacheDirPath);
+        args.putIfAbsent("cache", cacheDirPath);
+        File cacheDir = new File(cacheDirPath);
         if (!cacheDir.exists() || !cacheDir.isDirectory())
             cacheDir.mkdirs();
+
+        // set logging directory
+        String logDirPath = Paths.get(rootDirName, LOG_DIR).toAbsolutePath().toString();
+        logDirPath = Args.getArg("logdir", logDirPath);
+        args.putIfAbsent("logdir", logDirPath);
+        System.out.println("\nLogging output to log directory "+logDirPath+"\n");
+        Log.set(logDirPath);
+        Logger log = Logger.getGlobal();
+
+        // find (and parse) main source file
+        File srcFile = new File(fileName);
+        if (!srcFile.exists() || !srcFile.isFile())
+            throw new IllegalStateException("Source file '"+srcFile+"' not found");
 
         String jsSrc = Utils.loadText(srcFile);
         if (srcFile.getName().endsWith(".jet") || srcFile.getName().endsWith(".jjsp"))
@@ -596,7 +594,7 @@ public class Engine
                                 engine.restart();
                             }
                         }
-                        catch (Exception e) 
+                        catch (Exception e)
                         {
                             try { Thread.sleep(100); } catch (Exception ee){}
                         }

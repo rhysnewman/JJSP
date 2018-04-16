@@ -1,18 +1,18 @@
 /*
-JJSP - Java and Javascript Server Pages 
+JJSP - Java and Javascript Server Pages
 Copyright (C) 2016 Global Travel Ventures Ltd
 
-This program is free software: you can redistribute it and/or modify 
-it under the terms of the GNU General Public License as published by 
-the Free Software Foundation, either version 3 of the License, or 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but 
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License 
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
 
-You should have received a copy of the GNU General Public License along with 
+You should have received a copy of the GNU General Public License along with
 this program. If not, see http://www.gnu.org/licenses/.
 */
 package jjsp.util;
@@ -21,72 +21,96 @@ import java.util.*;
 
 public class Args
 {
-    private static Map<String, String> params = new LinkedHashMap();
+    private static Map<String, String> params = new LinkedHashMap<>();
 
-    public static Map parseArgs(String argList)
+    public static Map<String, String> parseArgs(String argList)
     {
-        String[] args = argList.split(" ");
+        String[] args = argList.split("\\s+");
         for (int i=0; i<args.length; i++)
             args[i] = args[i].trim();
 
         return parseArgs(args);
     }
 
-    public static Map parseArgs(String[] args)
+    public static Map<String, String> parseArgs(String[] args)
     {
         return parseArgs(args, 0);
     }
 
-    public static Map parseArgs(String[] args, int startIndex)
+    public static Map<String, String> parseArgs(String[] args, int startIdx)
     {
-        Map pp = new LinkedHashMap();
+        // simple arg parser - accepts boolean flags and string values
+        // boolean flags will be mapped to 'null' in the arg map
+        // use quotes to group argument values - DO NOT mix and match quote marks
+        Map<String, String> map = new LinkedHashMap<>();
 
-        for (int i=startIndex; i<args.length; i++)
+        String arg = null, value = null;
+        char quote = 0;
+        for ( int i = startIdx; i < args.length; i++ )
         {
-            String argName = args[i].toLowerCase();
-            if (argName.startsWith("-"))
-                argName = argName.substring(1);
+            String str = args[i];
+            if ( i == startIdx && !str.startsWith("-") )
+                continue;
 
-            if ((i == args.length-1) || args[i+1].startsWith("-"))
-                pp.put(argName, "true");
+            str = str.replaceAll("\\s+", " ");
+            if ( str.startsWith("-") )
+            {
+                if ( arg != null )
+                    map.put(arg, value);
+                // new arg
+                arg = str.substring(1).toLowerCase();
+                value = null;
+            }
+            else if ( str.startsWith("'") || str.startsWith("\"") )
+            {
+                value = str.substring(1);
+                quote = str.charAt(0);
+            }
+            else if ( quote != 0 )
+            {
+                if ( str.charAt(str.length() - 1) == quote ) {
+                    str = str.substring(0, str.length() -1);
+                    quote = 0;
+                }
+                value += " " + str;
+            }
             else
-                pp.put(argName, args[++i]);
+                value = str;
         }
-        
-        return pp;
+        if ( arg != null )
+            map.put(arg, value);
+
+        return map;
     }
 
-    public static String toArgString(Map argMap)
+    public static String toArgString(Map<String, String> argMap)
     {
         if ((argMap == null) || (argMap.size() == 0))
             return "";
 
-        StringBuffer buf = new StringBuffer();
-        Iterator itt = argMap.keySet().iterator();
-        while (itt.hasNext())
-        {
-            String key = (String) itt.next();
-            String value = argMap.get(key).toString();
-            buf.append("-"+key.toLowerCase()+" "+value+" ");
+        StringBuilder builder = new StringBuilder();
+        for ( String key : argMap.keySet() ) {
+            builder.append("-" + key + " ");
+            String value = argMap.get(key);
+            if ( value != null ) {
+                if ( value.contains(" ") )
+                    value = "'" + value + "'";
+                builder.append(value + " ");
+            }
         }
-
-        return buf.substring(0, buf.length()-1);
+        return builder.toString().trim();
     }
 
     public static synchronized Map<String, String> parse(String[] args, int startIndex)
     {
         params = parseArgs(args, startIndex);
-        Map<String, String> pp = new LinkedHashMap<String, String>();
-        pp.putAll(params);
-        return pp;
+        return new LinkedHashMap<>(params);
     }
 
     public static synchronized Map<String, String> parse(String[] args)
     {
         params = parseArgs(args);
-        Map<String, String> pp = new LinkedHashMap<String, String>();
-        pp.putAll(params);
-        return pp;
+        return new LinkedHashMap<>(params);
     }
 
     public static synchronized String getArg(String param, String def)
@@ -112,10 +136,7 @@ public class Args
 
     public static synchronized boolean getBoolean(String param, boolean def)
     {
-        param = param.toLowerCase();
-        if (!params.containsKey(param))
-            return def;
-        return "true".equals(params.get(param));
+        return hasArg(param) || def;
     }
 
     public static synchronized int getInt(String param, int def)
