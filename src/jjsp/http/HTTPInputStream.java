@@ -154,7 +154,7 @@ public class HTTPInputStream extends InputStream
             contentStream.close();
         contentStream = null;
 
-        if (!headers.readHeadersFromStream(src, clientAddress))
+        if (!headers.readHeadersFromStream(src, clientAddress, isSecure))
             return false;
 
         long len = headers.getContentLength();

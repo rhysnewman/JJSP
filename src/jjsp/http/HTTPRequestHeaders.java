@@ -32,6 +32,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
 
     private int pos;
     private String reqURL;
+    private boolean isSecure;
     private byte[] lineBuffer;
     private String clientIPAddress;
     private Map queryMap, cookieMap;
@@ -57,6 +58,7 @@ public class HTTPRequestHeaders extends HTTPHeaders
         super.clear();
         reqURL = null;
         pos = 0;
+        isSecure = false;
         queryParsed = false;
         cookiesParsed = false;
         queryMap.clear();
@@ -110,10 +112,10 @@ public class HTTPRequestHeaders extends HTTPHeaders
 
     public boolean readHeadersFromStream(InputStream src) throws IOException
     {
-        return readHeadersFromStream(src, null);
+        return readHeadersFromStream(src, null, false);
     }
 
-    public boolean readHeadersFromStream(InputStream src, InetSocketAddress clientSocketAddress) throws IOException
+    public boolean readHeadersFromStream(InputStream src, InetSocketAddress clientSocketAddress, boolean isSecure) throws IOException
     {
         clear();
         if (!readLine(src))
@@ -155,7 +157,8 @@ public class HTTPRequestHeaders extends HTTPHeaders
         return true;
     }
 
-    public String getRawURL() {
+    public String getRawURL() 
+    {
         int space = mainLine.indexOf(" ");
         if (space < 0)
             return null;
@@ -196,7 +199,12 @@ public class HTTPRequestHeaders extends HTTPHeaders
 
         String host = getHost();
         if (host != null)
-            return "http://"+host+result;
+        {
+            if (isSecure)
+                return "http://"+host+result;
+            else
+                return "https://"+host+result;
+        }
         return result;
     }
 
@@ -249,6 +257,11 @@ public class HTTPRequestHeaders extends HTTPHeaders
             parseHTTPQueryParameters(getQueryString(), queryMap);
         }
         return queryMap;
+    }
+
+    public boolean isSecure()
+    {
+        return isSecure;
     }
 
     public boolean hasQueryParam(String key)
