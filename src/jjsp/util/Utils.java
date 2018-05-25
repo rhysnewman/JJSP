@@ -28,7 +28,7 @@ import java.util.jar.*;
 
 public class Utils
 {
-    public static final String DEFAULT_VERSION_STRING = "5.25";
+    public static final String DEFAULT_VERSION_STRING = "6.10";
     public static final Charset ASCII = Charset.forName("US-ASCII");
     public static final Charset UTF8 = Charset.forName("UTF-8");
 
@@ -103,12 +103,12 @@ public class Utils
         return load(uri.toURL());
     }
 
-    public static URLClassLoader getClassLoaderFor(Object ref)
+    public static ClassLoader getClassLoaderFor(Object ref)
     {
         if (ref == null)
-            return (URLClassLoader) Utils.class.getClassLoader();
-        if (ref instanceof URLClassLoader)
-            return (URLClassLoader) ref;
+            return Utils.class.getClassLoader();
+        if (ref instanceof ClassLoader)
+            return (ClassLoader) ref;
 
         try
         {
@@ -117,11 +117,11 @@ public class Utils
                 cls = (Class) ref;
             else
                 cls = ref.getClass();
-            return (URLClassLoader) cls.getClassLoader();
+            return cls.getClassLoader();
         }
         catch (Exception e)
         {
-            return (URLClassLoader) Utils.class.getClassLoader();
+            return Utils.class.getClassLoader();
         }
     }
 

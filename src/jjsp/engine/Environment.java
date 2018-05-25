@@ -104,7 +104,8 @@ public class Environment extends ImageGenerator
 
         libraryLoader = createLibraryLoader();
 
-        clearSunJarFileFactoryCache();
+        // This was needed in JDK 7 and 8 in order to allow JJSP to restart correctly if a JAR was recompiled in between F5 runs. Hopefully in JDK10 this bug has been fixed....
+        //clearSunJarFileFactoryCache();
         reset(null);
     }
 
@@ -320,13 +321,6 @@ public class Environment extends ImageGenerator
     public URLClassLoader createJarLoaderFromRootURI() throws IOException
     {
         HashSet jjspLoaderUrls = new HashSet();
-        try
-        {
-            URL[] urls = ((URLClassLoader) getClass().getClassLoader()).getURLs();
-            for (int i=0; i<urls.length; i++)
-                jjspLoaderUrls.add(urls[i]);
-        }
-        catch (Exception e) {}
 
         ArrayList ll = new ArrayList();
         URL[] rootJarURLs = getJarURLsFromDirectoryURI(getRootURI());
