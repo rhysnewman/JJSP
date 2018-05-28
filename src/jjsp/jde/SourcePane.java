@@ -492,7 +492,7 @@ public class SourcePane extends JDETextEditor
             if (logger == null)
                 return log;
 
-            return (logEntry) -> {logger.requestProcessed(logEntry); log.requestProcessed(logEntry);};
+            return (logEntry) -> { try { logger.requestProcessed(logEntry); } catch (Exception e) { e.printStackTrace();} log.requestProcessed(logEntry);};
         }
 
         protected void serverListening(HTTPServer server, ServerSocketInfo socketInfo, Exception listenError) throws Exception
