@@ -62,7 +62,7 @@ doc: compile
 	chmod -R a+r+w build	
 
 	rm -rf doc/javadoc
-	javadoc -d doc/javadoc -sourcepath src jjsp.util jjsp.http jjsp.http.filters jjsp.engine 
+	javadoc --module-path "C:/Program Files/Java/javafx/lib" --add-modules ALL-MODULE-PATH -cp ".;" -d doc/javadoc -sourcepath src jjsp.util jjsp.http jjsp.http.filters jjsp.engine 
 
 	cp Readme.html doc/javadoc
 
