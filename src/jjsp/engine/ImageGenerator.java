@@ -333,9 +333,10 @@ public class ImageGenerator
             for (int j=0; j<im.getHeight(); j++)
             im.setRGB(i, j, bgColour);*/
 
-        double scale = Math.min(1, (1.0*height)/src.getHeight());
-        scale = Math.min(scale, (1.0*width)/src.getWidth());
+        //double scale = Math.min(1, (1.0*height)/src.getHeight());
+        //scale = Math.min(scale, (1.0*width)/src.getWidth());
 
+        double scale = 1;
         int w = (int) (src.getWidth()*scale);
         int h = (int) (src.getHeight()*scale);
 
