@@ -476,12 +476,12 @@ public class DirectoryFilter extends AbstractRequestFilter
             if (f.exists() && f.isDirectory() && accessPermitted(f))
             {
                 ds = getDirectoryHTMLListPage(f);
-                end = ds.length();
+                end = ds.length()-1;
 
                 respHeaders.configureAsOK();
                 respHeaders.configureCacheControl(ds.getETag(), ds.getLastModified(), -1);
                 respHeaders.setContentType("text/html");
-                response.prepareToSendContent(end-start, false);
+                response.prepareToSendContent(end-start+1, false);
             }
         }
         
@@ -491,7 +491,7 @@ public class DirectoryFilter extends AbstractRequestFilter
         if (end < 0)
             response.sendHeaders();
         else
-            ds.streamTo(start, end, response);
+            ds.streamTo(start, end+1, response);
 
         return urlPath;
     }
