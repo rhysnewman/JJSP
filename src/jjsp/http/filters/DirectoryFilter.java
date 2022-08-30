@@ -401,15 +401,15 @@ public class DirectoryFilter extends AbstractRequestFilter
                 
                 if (limits != null)
                 {
-                    if (limits[1] > 1)
-                        end = Math.min(limits[1]-1, end);
+                    if (limits[1] > 0)
+                        end = Math.min(limits[1], end);
                     start = Math.max(0, Math.min(end, limits[0]));
                     respHeaders.configureAsPartialContent(start, end, ds.length());
                 }
                 else
                     respHeaders.configureAsOK();
                     
-                response.prepareToSendContent(end-start, false);
+                response.prepareToSendContent(end-start+1, false);
             }
         }
         else
@@ -460,14 +460,14 @@ public class DirectoryFilter extends AbstractRequestFilter
                 if (limits != null)
                 {
                     if (limits[1] > 0)
-                        end = Math.min(limits[1]-1, end);
+                        end = Math.min(limits[1], end);
                     start = Math.max(0, Math.min(end, limits[0]));
                     respHeaders.configureAsPartialContent(start, end, ds.length());
                 }
                 else
                     respHeaders.configureAsOK();
                     
-                response.prepareToSendContent(end-start, false);
+                response.prepareToSendContent(end-start+1, false);
             }
         }
         else

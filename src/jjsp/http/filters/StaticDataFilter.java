@@ -157,25 +157,25 @@ public class StaticDataFilter extends AbstractRequestFilter
             configureResponseHeaders(request, response);
 
             long start = 0;
-            long end = rawData.length;        
+            long end = rawData.length-1;        
             long[] limits = request.getHeaders().extractByteRanges();
             if (limits != null)
             {
                 start = limits[0];
                 end = limits[1];
                 if (end < 0)
-                    end = rawData.length;
+                    end = rawData.length-1;
                 else
-                    end = Math.min(rawData.length, end);
+                    end = Math.min(rawData.length-1, end);
             }
 
             if (request.getHeaders().isHead())
             {
-                response.getHeaders().setContentLength(end-start);
+                response.getHeaders().setContentLength(end-start+1);
                 response.sendHeaders();
             }
             else
-                response.sendContent(rawData, (int) start, (int) (end-start));
+                response.sendContent(rawData, (int) start, (int) (end-start+1));
         }
 
         return true;

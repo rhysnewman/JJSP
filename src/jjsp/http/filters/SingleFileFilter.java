@@ -88,27 +88,27 @@ public class SingleFileFilter extends AbstractRequestFilter
         long[] limits = configureResponseHeaders(request, response);
 
         long start = 0;
-        long end = raf.length();
+        long end = raf.length()-1;
         
         if (limits != null)
         {
             start = limits[0];
             end = limits[1];
             if (end < 0)
-                end = raf.length();
+                end = raf.length()-1;
             else
-                end = Math.min(raf.length(), end);
+                end = Math.min(raf.length()-1, end);
         }
 
         if (request.getHeaders().isHead())
         {
-            response.getHeaders().setContentLength(end-start);
+            response.getHeaders().setContentLength(end-start+1);
             response.sendHeaders();
         }
         else
         {
             long toRead = end-start;
-            response.prepareToSendContent(end-start, false);
+            response.prepareToSendContent(end-start+1, false);
             byte[] buffer = new byte[(int) Math.max(10*1024, Math.min(toRead, 2*1024*1024))];
 
             while (true)
