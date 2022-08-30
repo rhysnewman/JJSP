@@ -967,7 +967,7 @@ public class JJSPRuntime extends Environment
             if (limits != null)
             {
                 if (limits[1] > 0)
-                    end = Math.min(limits[1], end);
+                    end = Math.min(limits[1]-1, end);
                 start = Math.max(0, Math.min(end, limits[0]));
                 end = Math.max(start, end);
 

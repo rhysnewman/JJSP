@@ -397,12 +397,12 @@ public class DirectoryFilter extends AbstractRequestFilter
             else
             {
                 long start = 0;
-                long end = ds.length();
+                long end = ds.length()-1;
                 
                 if (limits != null)
                 {
-                    if (limits[1] > 0)
-                        end = Math.min(limits[1], end);
+                    if (limits[1] > 1)
+                        end = Math.min(limits[1]-1, end);
                     start = Math.max(0, Math.min(end, limits[0]));
                     respHeaders.configureAsPartialContent(start, end, ds.length());
                 }
@@ -455,12 +455,12 @@ public class DirectoryFilter extends AbstractRequestFilter
                 respHeaders.configureAsNotModified();
             else
             {
-                end = ds.length();
+                end = ds.length()-1;
                 
                 if (limits != null)
                 {
                     if (limits[1] > 0)
-                        end = Math.min(limits[1], end);
+                        end = Math.min(limits[1]-1, end);
                     start = Math.max(0, Math.min(end, limits[0]));
                     respHeaders.configureAsPartialContent(start, end, ds.length());
                 }
