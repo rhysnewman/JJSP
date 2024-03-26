@@ -13,9 +13,9 @@ compile:
 	mkdir -p build
 	chmod -R a+r+w build
 ifeq ($(sysname), $(cygwinname))
-	javac --module-path "C:/Program Files/Java/javafx/lib;lib/nashorn.jar" --add-modules ALL-MODULE-PATH -cp "." -parameters -d build `find src/ -name \*.java`
+	javac --module-path "C:/Program Files/Java/javafx/lib;jjsplib" --add-modules ALL-MODULE-PATH -cp "." -parameters -d build `find src/ -name \*.java`
 else
-	javac --module-path "C:/Program Files/Java/javafx/lib:lib/nashorn.jar" --add-modules ALL-MODULE-PATH -cp "." -parameters -d build `find src/ -name \*.java`
+	javac --module-path "C:/Program Files/Java/javafx/lib:jjsplib" --add-modules ALL-MODULE-PATH -cp "." -parameters -d build `find src/ -name \*.java`
 endif
 
 .PHONY: clean
@@ -69,11 +69,11 @@ doc: compile
 	jar -cfm JJSP.jar jar.manifest -C build / -C doc .
 	rm -f jar.manifest
 
-.PHONY: run
-run:
+.PHONY: runold
+runold:
 	java --module-path 'C:/Program Files/Java/javafx/lib;lib/nashorn.jar;lib/asm-commons-7.3.1.jar;lib/asm-tree-7.3.1.jar;lib/asm-util-7.3.1.jar;lib/asm-7.3.1.jar;lib/asm-analysis-7.3.1.jar' --add-modules ALL-MODULE-PATH -cp "JJSP.jar" jjsp.engine.Launcher 
 
-.PHONY: run2
-run2:
-	java --module-path 'C:/Program Files/Java/javafx/lib;lib' --add-modules ALL-MODULE-PATH -cp "JJSP.jar" jjsp.engine.Launcher 
+.PHONY: run
+run:
+	java --module-path 'C:/Program Files/Java/javafx/lib;jjsplib' --add-modules ALL-MODULE-PATH -cp "JJSP.jar" jjsp.engine.Launcher 
 
