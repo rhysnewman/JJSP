@@ -67,11 +67,7 @@ doc: compile
 	cp Readme.html doc/javadoc
 
 	jar -cfm JJSP.jar jar.manifest -C build / -C doc .
-	rm -f jar.manifest
-
-.PHONY: runold
-runold:
-	java --module-path 'C:/Program Files/Java/javafx/lib;lib/nashorn.jar;lib/asm-commons-7.3.1.jar;lib/asm-tree-7.3.1.jar;lib/asm-util-7.3.1.jar;lib/asm-7.3.1.jar;lib/asm-analysis-7.3.1.jar' --add-modules ALL-MODULE-PATH -cp "JJSP.jar" jjsp.engine.Launcher 
+	rm -f jar.manifest 
 
 .PHONY: run
 run:
