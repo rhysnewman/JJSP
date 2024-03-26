@@ -28,7 +28,7 @@ import java.util.jar.*;
 
 public class Utils
 {
-    public static final String DEFAULT_VERSION_STRING = "6.10";
+    public static final String DEFAULT_VERSION_STRING = "7.10";
     public static final Charset ASCII = Charset.forName("US-ASCII");
     public static final Charset UTF8 = Charset.forName("UTF-8");
 
