@@ -26,10 +26,11 @@ import jjsp.util.*;
 public class HTTPInputStream extends InputStream
 {
     private static final int DEFAULT_MAX_TO_READ_ON_CLOSE = 4*1024;
-    private static final int DEFAULT_MAX_POST_DATA_SIZE = 256*1024;
+    private static final int DEFAULT_MAX_POST_DATA_SIZE = 4*1024*1024;
 
     private boolean isSecure;
     private int serverPort;
+    private int maxPostDataLength;
     private HTTPRequestHeaders headers;
     private InetSocketAddress clientAddress;
     private MeasurableInputStream src;
@@ -44,6 +45,7 @@ public class HTTPInputStream extends InputStream
 
         headers = new HTTPRequestHeaders();
         contentStream = null;
+        maxPostDataLength = DEFAULT_MAX_POST_DATA_SIZE;
     }
 
     public int getServerPort()
@@ -79,6 +81,16 @@ public class HTTPInputStream extends InputStream
     public long getBytesRead()
     {
         return src.totalBytesRead;
+    }
+
+    public long getMaxPostDataLength()
+    {
+        return maxPostDataLength;
+    }
+
+    public void setMaxPostDataLength(int value)
+    {
+        maxPostDataLength = value;
     }
 
     class MeasurableInputStream extends InputStream
@@ -234,7 +246,7 @@ public class HTTPInputStream extends InputStream
 
     public String readContent() throws IOException
     {
-        return readContent(DEFAULT_MAX_POST_DATA_SIZE);
+        return readContent(maxPostDataLength);
     }
 
     public String readContent(int maxLength) throws IOException
@@ -244,7 +256,7 @@ public class HTTPInputStream extends InputStream
 
     public byte[] readRawContent() throws IOException
     {
-        return readRawContent(DEFAULT_MAX_POST_DATA_SIZE);
+        return readRawContent(maxPostDataLength);
     }
 
     public byte[] readRawContent(int maxLength) throws IOException
@@ -257,7 +269,7 @@ public class HTTPInputStream extends InputStream
             if (contentStream instanceof UnchunkedContentStream)
             {
                 int len = (int)((UnchunkedContentStream)contentStream).length;
-                if (len >= maxLength)
+                if ((maxLength > 0) && (len >= maxLength))
                     throw new IOException("POST content too long ("+len+")");
 
                 byte[] raw = new byte[len];
