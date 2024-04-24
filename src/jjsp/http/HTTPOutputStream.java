@@ -185,22 +185,22 @@ public class HTTPOutputStream extends OutputStream
     public void sendServerErrorMessage(String headerMessage, String bodyContent) throws IOException
     {
         headers.configureAsServerError(headerMessage);
-        sendContent(bodyContent, "text/plain");
+        sendTextContent(bodyContent, "text/plain");
     }
 
     public void sendHTML(String content) throws IOException
     {
-        sendContent(content, "text/html; charset=utf-8");
+        sendTextContent(content, "text/html; charset=utf-8");
     }
 
     public void sendJSON(String content) throws IOException
     {
-        sendContent(content, "application/json; charset=utf-8");
+        sendTextContent(content, "application/json; charset=utf-8");
     }
 
     public void sendJavscript(String content) throws IOException
     {
-        sendContent(content, "application/javascript; charset=utf-8");
+        sendTextContent(content, "application/javascript; charset=utf-8");
     }
 
     public void gzipAndSendJSON(String uncompressedJSON) throws IOException
@@ -221,7 +221,7 @@ public class HTTPOutputStream extends OutputStream
 
     public void sendContent(String content) throws IOException
     {
-        sendContent(content, null);
+        sendTextContent(content, null);
     }
 
     public void sendContent(byte[] content) throws IOException
@@ -229,7 +229,7 @@ public class HTTPOutputStream extends OutputStream
         sendContent(content, null);
     }
 
-    public void sendContent(String content, String contentType) throws IOException
+    public void sendTextContent(String content, String contentType) throws IOException
     {
         sendContent(Utils.getAsciiBytes(content), contentType);
     }
